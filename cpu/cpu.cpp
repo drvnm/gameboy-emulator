@@ -6,6 +6,12 @@ CPU::CPU(std::vector<uint8_t> rom) : rom(rom)
 {
     registers.reset(); 
     setupOpcodes();
+
+    // load the rom into memory
+    for (int i = 0; i < rom.size(); i++)
+    {
+        memory[i] = rom[i];
+    }
 }
 
 void CPU::execute()

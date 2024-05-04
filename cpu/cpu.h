@@ -13,10 +13,103 @@ class CPU
     short (CPU::*opcodes[0xFF])(); // array of function pointers to the opcodes
     Registers registers;           // 8-bit registers
     void setupOpcodes();           // sets up the opcodes
-    // work ram
-    OPCODE memory[0x2000]; // 8KB of work ram
+    uint8_t memory[0xFFFF]; // 64KB of memory
 
     void executeInstruction(OPCODE instruction); // fetches and executes the instruction
+
+    // LOAD INSTRUCTIONS  
+    void load8bit(REGISTER *reg, uint8_t value);
+    NUM_CYCLES opcode0x7F(); // LD A, AF.HIGH
+    NUM_CYCLES opcode0x78(); // LD A, BC.HIGH
+    NUM_CYCLES opcode0x79(); // LD A, BC.LOW
+    NUM_CYCLES opcode0x7A(); // LD A, DE.HIGH
+    NUM_CYCLES opcode0x7B(); // LD A, DE.LOW
+    NUM_CYCLES opcode0x7C(); // LD A, HL.HIGH
+    NUM_CYCLES opcode0x7D(); // LD A, HL.LOW
+    NUM_CYCLES opcode0x7E(); // LD A, (HL)
+    NUM_CYCLES opcode0x3E(); // LD A, NUMBER
+    NUM_CYCLES opcode0x47(); // LD B, AF.HIGH
+    NUM_CYCLES opcode0x40(); // LD B, BC.HIGH
+    NUM_CYCLES opcode0x41(); // LD B, BC.LOW
+    NUM_CYCLES opcode0x42(); // LD B, DE.HIGH
+    NUM_CYCLES opcode0x43(); // LD B, DE.LOW
+    NUM_CYCLES opcode0x44(); // LD B, HL.HIGH
+    NUM_CYCLES opcode0x45(); // LD B, HL.LOW
+    NUM_CYCLES opcode0x46(); // LD B, (HL)
+    NUM_CYCLES opcode0x06(); // LD B, NUMBER
+    NUM_CYCLES opcode0x4F(); // LD C, AF.HIGH
+    NUM_CYCLES opcode0x48(); // LD C, BC.HIGH
+    NUM_CYCLES opcode0x49(); // LD C, BC.LOW
+    NUM_CYCLES opcode0x4A(); // LD C, DE.HIGH
+    NUM_CYCLES opcode0x4B(); // LD C, DE.LOW
+    NUM_CYCLES opcode0x4C(); // LD C, HL.HIGH
+    NUM_CYCLES opcode0x4D(); // LD C, HL.LOW
+    NUM_CYCLES opcode0x4E(); // LD C, (HL)
+    NUM_CYCLES opcode0x0E(); // LD C, NUMBER
+    NUM_CYCLES opcode0x57(); // LD D, AF.HIGH
+    NUM_CYCLES opcode0x50(); // LD D, BC.HIGH
+    NUM_CYCLES opcode0x51(); // LD D, BC.LOW
+    NUM_CYCLES opcode0x52(); // LD D, DE.HIGH
+    NUM_CYCLES opcode0x53(); // LD D, DE.LOW
+    NUM_CYCLES opcode0x54(); // LD D, HL.HIGH
+    NUM_CYCLES opcode0x55(); // LD D, HL.LOW
+    NUM_CYCLES opcode0x56(); // LD D, (HL)
+    NUM_CYCLES opcode0x16(); // LD D, NUMBER
+    NUM_CYCLES opcode0x5F(); // LD E, AF.HIGH
+    NUM_CYCLES opcode0x58(); // LD E, BC.HIGH
+    NUM_CYCLES opcode0x59(); // LD E, BC.LOW
+    NUM_CYCLES opcode0x5A(); // LD E, DE.HIGH
+    NUM_CYCLES opcode0x5B(); // LD E, DE.LOW
+    NUM_CYCLES opcode0x5C(); // LD E, HL.HIGH
+    NUM_CYCLES opcode0x5D(); // LD E, HL.LOW
+    NUM_CYCLES opcode0x5E(); // LD E, (HL)
+    NUM_CYCLES opcode0x1E(); // LD E, NUMBER
+    NUM_CYCLES opcode0x67(); // LD HL.HIGH, AF.HIGH
+    NUM_CYCLES opcode0x60(); // LD HL.HIGH, BC.HIGH
+    NUM_CYCLES opcode0x61(); // LD HL.HIGH, BC.LOW
+    NUM_CYCLES opcode0x62(); // LD HL.HIGH, DE.HIGH
+    NUM_CYCLES opcode0x63(); // LD HL.HIGH, DE.LOW
+    NUM_CYCLES opcode0x64(); // LD HL.HIGH, HL.HIGH
+    NUM_CYCLES opcode0x65(); // LD HL.HIGH, HL.LOW
+    NUM_CYCLES opcode0x66(); // LD HL.HIGH, (HL)
+    NUM_CYCLES opcode0x26(); // LD HL.HIGH, NUMBER
+    NUM_CYCLES opcode0x6F(); // LD HL.LOW, AF.HIGH
+    NUM_CYCLES opcode0x68(); // LD HL.LOW, BC.HIGH
+    NUM_CYCLES opcode0x69(); // LD HL.LOW, BC.LOW
+    NUM_CYCLES opcode0x6A(); // LD HL.LOW, DE.HIGH
+    NUM_CYCLES opcode0x6B(); // LD HL.LOW, DE.LOW
+    NUM_CYCLES opcode0x6C(); // LD HL.LOW, HL.HIGH
+    NUM_CYCLES opcode0x6D(); // LD HL.LOW, HL.LOW
+    NUM_CYCLES opcode0x6E(); // LD HL.LOW, (HL)
+    NUM_CYCLES opcode0x2E(); // LD HL.LOW, NUMBER
+    NUM_CYCLES opcode0x77(); // LD (HL), AF.HIGH
+    NUM_CYCLES opcode0x70(); // LD (HL), BC.HIGH
+    NUM_CYCLES opcode0x71(); // LD (HL), BC.LOW
+    NUM_CYCLES opcode0x72(); // LD (HL), DE.HIGH
+    NUM_CYCLES opcode0x73(); // LD (HL), DE.LOW
+    NUM_CYCLES opcode0x74(); // LD (HL), HL.HIGH
+    NUM_CYCLES opcode0x75(); // LD (HL), HL.LOW
+    NUM_CYCLES opcode0x36(); // LD (HL), NUMBER
+    NUM_CYCLES opcode0x0A(); // LD A, (BC)
+    NUM_CYCLES opcode0x1A(); // LD A, (DE)
+    NUM_CYCLES opcode0xFA(); // LD A, (NUMBER)
+    NUM_CYCLES opcode0x02(); // LD (BC), A
+    NUM_CYCLES opcode0x12(); // LD (DE), A
+    NUM_CYCLES opcode0xEA(); // LD (NUMBER), A
+    NUM_CYCLES opcode0xF0(); // LD A, (C) (0xFF00 + n)
+    NUM_CYCLES opcode0xE0(); // LD (C), A (0xFF00 + n)
+    NUM_CYCLES opcode0xF2(); // LD A, (C) (0xFF00 + C)
+    NUM_CYCLES opcode0xE2(); // LD (C), A (0xFF00 + C)
+    NUM_CYCLES opcode0x3A(); // LDD A, (HL)
+    NUM_CYCLES opcode0x32(); // LDD (HL), A
+    NUM_CYCLES opcode0x2A(); // LDI A, (HL)
+    NUM_CYCLES opcode0x22(); // LDI (HL), A
+    
+
+
+
+
+
 
     // ADD INSTRUCTIONS
     void add8bit(REGISTER *reg, uint8_t value);
@@ -130,7 +223,6 @@ class CPU
     NUM_CYCLES opcode0x27(); // DAA
     // CPL INSTRUCTIONS
     NUM_CYCLES opcode0x2F(); // CPL
-    // CCF INSTRUCTIONS
 
 
 

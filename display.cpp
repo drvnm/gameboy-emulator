@@ -1,5 +1,6 @@
 #include "display.h"
 #include <iostream>
+
 Display::Display()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
