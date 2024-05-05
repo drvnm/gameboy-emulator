@@ -4,11 +4,11 @@
 
 CPU::CPU(std::vector<uint8_t> rom) : rom(rom)
 {
-    registers.reset(); 
+    registers.reset();
     setupOpcodes();
 
     // load the rom into memory
-    for (int i = 0; i < rom.size(); i++)
+    for (size_t i = 0; i < rom.size(); i++)
     {
         memory[i] = rom[i];
     }
@@ -25,12 +25,125 @@ void CPU::execute()
 
 void CPU::executeInstruction(OPCODE opcode)
 {
-    std::cout << "Executing opcode: " << std::hex << (int)opcode << std::endl;
-    (this->*opcodes[opcode])();
+    std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << std::endl;
+    if (opcodes[opcode] != nullptr)
+        (this->*opcodes[opcode])();
+    else
+    {
+        std::cout << "Opcode not implemented" << std::endl;
+        throw std::runtime_error("Opcode not implemented");
+    }
 }
 
 void CPU::setupOpcodes()
 {
+    // NOP
+    opcodes[0x00] = &CPU::opcode0x00;
+    
+    // LOAD INSTRUCTIONS
+    opcodes[0x7F] = &CPU::opcode0x7F;
+    opcodes[0x78] = &CPU::opcode0x78;
+    opcodes[0x79] = &CPU::opcode0x79;
+    opcodes[0x7A] = &CPU::opcode0x7A;
+    opcodes[0x7B] = &CPU::opcode0x7B;
+    opcodes[0x7C] = &CPU::opcode0x7C;
+    opcodes[0x7D] = &CPU::opcode0x7D;
+    opcodes[0x7E] = &CPU::opcode0x7E;
+    opcodes[0x3E] = &CPU::opcode0x3E;
+    opcodes[0x47] = &CPU::opcode0x47;
+    opcodes[0x40] = &CPU::opcode0x40;
+    opcodes[0x41] = &CPU::opcode0x41;
+    opcodes[0x42] = &CPU::opcode0x42;
+    opcodes[0x43] = &CPU::opcode0x43;
+    opcodes[0x44] = &CPU::opcode0x44;
+    opcodes[0x45] = &CPU::opcode0x45;
+    opcodes[0x46] = &CPU::opcode0x46;
+    opcodes[0x06] = &CPU::opcode0x06;
+    opcodes[0x4F] = &CPU::opcode0x4F;
+    opcodes[0x48] = &CPU::opcode0x48;
+    opcodes[0x49] = &CPU::opcode0x49;
+    opcodes[0x4A] = &CPU::opcode0x4A;
+    opcodes[0x4B] = &CPU::opcode0x4B;
+    opcodes[0x4C] = &CPU::opcode0x4C;
+    opcodes[0x4D] = &CPU::opcode0x4D;
+    opcodes[0x4E] = &CPU::opcode0x4E;
+    opcodes[0x0E] = &CPU::opcode0x0E;
+    opcodes[0x57] = &CPU::opcode0x57;
+    opcodes[0x50] = &CPU::opcode0x50;
+    opcodes[0x51] = &CPU::opcode0x51;
+    opcodes[0x52] = &CPU::opcode0x52;
+    opcodes[0x53] = &CPU::opcode0x53;
+    opcodes[0x54] = &CPU::opcode0x54;
+    opcodes[0x55] = &CPU::opcode0x55;
+    opcodes[0x56] = &CPU::opcode0x56;
+    opcodes[0x16] = &CPU::opcode0x16;
+    opcodes[0x5F] = &CPU::opcode0x5F;
+    opcodes[0x58] = &CPU::opcode0x58;
+    opcodes[0x59] = &CPU::opcode0x59;
+    opcodes[0x5A] = &CPU::opcode0x5A;
+    opcodes[0x5B] = &CPU::opcode0x5B;
+    opcodes[0x5C] = &CPU::opcode0x5C;
+    opcodes[0x5D] = &CPU::opcode0x5D;
+    opcodes[0x5E] = &CPU::opcode0x5E;
+    opcodes[0x1E] = &CPU::opcode0x1E;
+    opcodes[0x67] = &CPU::opcode0x67;
+    opcodes[0x60] = &CPU::opcode0x60;
+    opcodes[0x61] = &CPU::opcode0x61;
+    opcodes[0x62] = &CPU::opcode0x62;
+    opcodes[0x63] = &CPU::opcode0x63;
+    opcodes[0x64] = &CPU::opcode0x64;
+    opcodes[0x65] = &CPU::opcode0x65;
+    opcodes[0x66] = &CPU::opcode0x66;
+    opcodes[0x26] = &CPU::opcode0x26;
+    opcodes[0x6F] = &CPU::opcode0x6F;
+    opcodes[0x68] = &CPU::opcode0x68;
+    opcodes[0x69] = &CPU::opcode0x69;
+    opcodes[0x6A] = &CPU::opcode0x6A;
+    opcodes[0x6B] = &CPU::opcode0x6B;
+    opcodes[0x6C] = &CPU::opcode0x6C;
+    opcodes[0x6D] = &CPU::opcode0x6D;
+    opcodes[0x6E] = &CPU::opcode0x6E;
+    opcodes[0x2E] = &CPU::opcode0x2E;
+    opcodes[0x77] = &CPU::opcode0x77;
+    opcodes[0x70] = &CPU::opcode0x70;
+    opcodes[0x71] = &CPU::opcode0x71;
+    opcodes[0x72] = &CPU::opcode0x72;
+    opcodes[0x73] = &CPU::opcode0x73;
+    opcodes[0x74] = &CPU::opcode0x74;
+    opcodes[0x75] = &CPU::opcode0x75;
+    opcodes[0x36] = &CPU::opcode0x36;
+    opcodes[0x0A] = &CPU::opcode0x0A;
+    opcodes[0x1A] = &CPU::opcode0x1A;
+    opcodes[0xFA] = &CPU::opcode0xFA;
+    opcodes[0x02] = &CPU::opcode0x02;
+    opcodes[0x12] = &CPU::opcode0x12;
+    opcodes[0xEA] = &CPU::opcode0xEA;
+    opcodes[0xF0] = &CPU::opcode0xF0;
+    opcodes[0xE0] = &CPU::opcode0xE0;
+    opcodes[0xF2] = &CPU::opcode0xF2;
+    opcodes[0xE2] = &CPU::opcode0xE2;
+    opcodes[0x3A] = &CPU::opcode0x3A;
+    opcodes[0x32] = &CPU::opcode0x32;
+    opcodes[0x2A] = &CPU::opcode0x2A;
+    opcodes[0x22] = &CPU::opcode0x22;
+
+    // 16-BIT LOAD INSTRUCTIONS
+    opcodes[0x01] = &CPU::opcode0x01;
+    opcodes[0x11] = &CPU::opcode0x11;
+    opcodes[0x21] = &CPU::opcode0x21;
+    opcodes[0x31] = &CPU::opcode0x31;
+    opcodes[0xF9] = &CPU::opcode0xF9;
+
+    // PUSH AND POP INSTRUCTIONS
+    opcodes[0xF5] = &CPU::opcode0xF5;
+    opcodes[0xC5] = &CPU::opcode0xC5;
+    opcodes[0xD5] = &CPU::opcode0xD5;
+    opcodes[0xE5] = &CPU::opcode0xE5;
+    opcodes[0xF1] = &CPU::opcode0xF1;
+    opcodes[0xC1] = &CPU::opcode0xC1;
+    opcodes[0xD1] = &CPU::opcode0xD1;
+    opcodes[0xE1] = &CPU::opcode0xE1;
+
     // ADD INSTRUCTIONS
     opcodes[0x87] = &CPU::opcode0x87;
     opcodes[0x80] = &CPU::opcode0x80;
@@ -143,16 +256,58 @@ void CPU::setupOpcodes()
     opcodes[0x27] = &CPU::opcode0x27;
     opcodes[0x2F] = &CPU::opcode0x2F;
 
-    
+    // JUMP INSTRUCTIONS
+    opcodes[0xC3] = &CPU::opcode0xC3;
+    opcodes[0xC2] = &CPU::opcode0xC2;
+    opcodes[0xCA] = &CPU::opcode0xCA;
+    opcodes[0xD2] = &CPU::opcode0xD2;
+    opcodes[0xDA] = &CPU::opcode0xDA;
+    opcodes[0x18] = &CPU::opcode0x18;
+    opcodes[0x20] = &CPU::opcode0x20;
+    opcodes[0x28] = &CPU::opcode0x28;
+    opcodes[0x30] = &CPU::opcode0x30;
+    opcodes[0x38] = &CPU::opcode0x38;
 
+    // CALL INSTRUCTIONS
+    opcodes[0xCD] = &CPU::opcode0xCD;
+    opcodes[0xC4] = &CPU::opcode0xC4;
+    opcodes[0xCC] = &CPU::opcode0xCC;
+    opcodes[0xD4] = &CPU::opcode0xD4;
+    opcodes[0xDC] = &CPU::opcode0xDC;
 
-
-
-
-
-
-
-
-
+    // RETURN INSTRUCTIONS
+    opcodes[0xC9] = &CPU::opcode0xC9;
+    opcodes[0xC0] = &CPU::opcode0xC0;
+    opcodes[0xC8] = &CPU::opcode0xC8;
+    opcodes[0xD0] = &CPU::opcode0xD0;
+    opcodes[0xD8] = &CPU::opcode0xD8;
+    // opcodes[0xD9] = &CPU::opcode0xD9; NOT IMPLEMENTED YET
+    opcodes[0xC7] = &CPU::opcode0xC7;
+    opcodes[0xCF] = &CPU::opcode0xCF;
+    opcodes[0xD7] = &CPU::opcode0xD7;
+    opcodes[0xE7] = &CPU::opcode0xE7;
+    opcodes[0xEF] = &CPU::opcode0xEF;
+    opcodes[0xF7] = &CPU::opcode0xF7;
+    opcodes[0xFF] = &CPU::opcode0xFF;
 }
 
+// stack operations
+void CPU::push(uint16_t value)
+{
+    memory[registers.sp - 1] = (value >> 8) & 0xFF;
+    memory[registers.sp - 2] = value & 0xFF;
+    registers.sp -= 2;
+}
+
+uint16_t CPU::pop()
+{
+    uint16_t value = memory[registers.sp] | (memory[registers.sp + 1] << 8);
+    registers.sp += 2;
+    return value;
+}
+
+uint16_t CPU::load16BitFromPC()
+{
+    uint16_t value = memory[registers.pc + 1] | (memory[registers.pc + 2] << 8);
+    return value;
+}

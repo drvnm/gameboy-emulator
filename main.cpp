@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
 
     Cartridge cartridge(rom);
 
-    CPU cpu(std::vector<uint8_t>{0x87, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0xC6});
-    // cpu.execute();
+    CPU cpu(rom);
+    cpu.execute();
     return 0;
 
 

@@ -32,4 +32,5 @@ enum FlagTypes {
 
 #define NUM_CYCLES short
 #define REGISTER uint8_t
+#define REGISTER16 uint16_t
 #define OPCODE uint8_t

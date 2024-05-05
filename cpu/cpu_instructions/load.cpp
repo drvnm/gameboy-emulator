@@ -532,3 +532,98 @@ NUM_CYCLES CPU::opcode0x22()
     return 8;
 } // LDI (HL), A
 
+// 16-BIT LOAD INSTRUCTIONS
+void CPU::load16bit(REGISTER16 *reg, uint16_t value)
+{
+    *reg = value;
+}
+
+NUM_CYCLES CPU::opcode0x01()
+{
+    uint16_t value = load16BitFromPC();
+    load16bit(&registers.bc, value);
+    registers.pc += 2;
+    return 12;
+} // LD BC, NUMBER
+
+NUM_CYCLES CPU::opcode0x11()
+{
+    uint16_t value = load16BitFromPC();
+
+    load16bit(&registers.de, value);
+    registers.pc += 2;
+    return 12;
+} // LD DE, NUMBER
+
+NUM_CYCLES CPU::opcode0x21()
+{
+    uint16_t value = load16BitFromPC();
+
+    load16bit(&registers.hl, value);
+    registers.pc += 2;
+    return 12;
+} // LD HL, NUMBER
+
+NUM_CYCLES CPU::opcode0x31()
+{
+    uint16_t value = load16BitFromPC();
+
+    load16bit(&registers.sp, value);
+    registers.pc += 2;
+    return 12;
+} // LD SP, NUMBER
+
+NUM_CYCLES CPU::opcode0xF9()
+{
+    load16bit(&registers.sp, registers.hl);
+    return 8;
+} // LD SP, HL
+
+// PUSH AND POP INSTRUCTIONS
+NUM_CYCLES CPU::opcode0xF5()
+{
+    push(registers.af);
+    return 16;
+} // PUSH AF
+
+NUM_CYCLES CPU::opcode0xC5()
+{
+    push(registers.bc);
+    return 16;
+} // PUSH BC
+
+NUM_CYCLES CPU::opcode0xD5()
+{
+    push(registers.de);
+    return 16;
+} // PUSH DE
+
+NUM_CYCLES CPU::opcode0xE5()
+{
+    push(registers.hl);
+    return 16;
+} // PUSH HL
+
+NUM_CYCLES CPU::opcode0xF1()
+{
+    registers.af = pop();
+    return 12;
+} // POP AF
+
+NUM_CYCLES CPU::opcode0xC1()
+{
+    registers.bc = pop();
+    return 12;
+} // POP BC
+
+NUM_CYCLES CPU::opcode0xD1()
+{
+    registers.de = pop();
+    return 12;
+} // POP DE
+
+NUM_CYCLES CPU::opcode0xE1()
+{
+    registers.hl = pop();
+    return 12;
+} // POP HL

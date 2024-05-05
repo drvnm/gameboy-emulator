@@ -13,11 +13,21 @@ class CPU
     short (CPU::*opcodes[0xFF])(); // array of function pointers to the opcodes
     Registers registers;           // 8-bit registers
     void setupOpcodes();           // sets up the opcodes
-    uint8_t memory[0xFFFF]; // 64KB of memory
+    uint8_t memory[0xFFFF];        // 64KB of memory
 
     void executeInstruction(OPCODE instruction); // fetches and executes the instruction
 
-    // LOAD INSTRUCTIONS  
+    // stack operations
+    void push(uint16_t value);
+    uint16_t pop();
+
+    // helper functions
+    uint16_t load16BitFromPC();
+
+    // NO OP
+    NUM_CYCLES opcode0x00();
+    
+    // LOAD INSTRUCTIONS
     void load8bit(REGISTER *reg, uint8_t value);
     NUM_CYCLES opcode0x7F(); // LD A, AF.HIGH
     NUM_CYCLES opcode0x78(); // LD A, BC.HIGH
@@ -104,11 +114,27 @@ class CPU
     NUM_CYCLES opcode0x32(); // LDD (HL), A
     NUM_CYCLES opcode0x2A(); // LDI A, (HL)
     NUM_CYCLES opcode0x22(); // LDI (HL), A
-    
+
+    // 16-BIT LOAD INSTRUCTIONS
+    void load16bit(REGISTER16 *reg, uint16_t value);
+    NUM_CYCLES opcode0x01(); // LD BC, NUMBER
+    NUM_CYCLES opcode0x11(); // LD DE, NUMBER
+    NUM_CYCLES opcode0x21(); // LD HL, NUMBER
+    NUM_CYCLES opcode0x31(); // LD SP, NUMBER
+    NUM_CYCLES opcode0xF9(); // LD SP, HL
+    NUM_CYCLES opcode0xF8(); // LD HL, SP + NUMBER
+    NUM_CYCLES opcode0x08(); // LD (NUMBER), SP
 
 
-
-
+    // PUSH AND POP INSTRUCTIONS
+    NUM_CYCLES opcode0xF5(); // PUSH AF
+    NUM_CYCLES opcode0xC5(); // PUSH BC
+    NUM_CYCLES opcode0xD5(); // PUSH DE
+    NUM_CYCLES opcode0xE5(); // PUSH HL
+    NUM_CYCLES opcode0xF1(); // POP AF
+    NUM_CYCLES opcode0xC1(); // POP BC
+    NUM_CYCLES opcode0xD1(); // POP DE
+    NUM_CYCLES opcode0xE1(); // POP HL
 
 
     // ADD INSTRUCTIONS
@@ -223,6 +249,43 @@ class CPU
     NUM_CYCLES opcode0x27(); // DAA
     // CPL INSTRUCTIONS
     NUM_CYCLES opcode0x2F(); // CPL
+
+    // JUMP INSTRUCTIONS
+    void set16bitRegister(REGISTER *reg, uint16_t value);
+    NUM_CYCLES opcode0xC3(); // JP NUMBER
+    NUM_CYCLES opcode0xE9(); // JP HL
+    NUM_CYCLES opcode0xC2(); // JP NZ, NUMBER
+    NUM_CYCLES opcode0xCA(); // JP Z, NUMBER
+    NUM_CYCLES opcode0xD2(); // JP NC, NUMBER
+    NUM_CYCLES opcode0xDA(); // JP C, NUMBER
+    NUM_CYCLES opcode0x18(); // JP RELATIVE
+    NUM_CYCLES opcode0x20(); // JR NZ, RELATIVE
+    NUM_CYCLES opcode0x28(); // JR Z, RELATIVE
+    NUM_CYCLES opcode0x30(); // JR NC, RELATIVE
+    NUM_CYCLES opcode0x38(); // JR C, RELATIVE
+
+    // CALL INSTRUCTIONS
+    NUM_CYCLES opcode0xCD(); // CALL NUMBER
+    NUM_CYCLES opcode0xC4(); // CALL NZ, NUMBER
+    NUM_CYCLES opcode0xCC(); // CALL Z, NUMBER
+    NUM_CYCLES opcode0xD4(); // CALL NC, NUMBER
+    NUM_CYCLES opcode0xDC(); // CALL C, NUMBER
+
+    // RETURN INSTRUCTIONS
+    NUM_CYCLES opcode0xC9(); // RET
+    NUM_CYCLES opcode0xC0(); // RET NZ
+    NUM_CYCLES opcode0xC8(); // RET Z
+    NUM_CYCLES opcode0xD0(); // RET NC
+    NUM_CYCLES opcode0xD8(); // RET C
+    NUM_CYCLES opcode0xD9(); // RETI
+    NUM_CYCLES opcode0xC7(); // RST 0x00
+    NUM_CYCLES opcode0xCF(); // RST 0x08
+    NUM_CYCLES opcode0xD7(); // RST 0x10
+    NUM_CYCLES opcode0xDF(); // RST 0x18
+    NUM_CYCLES opcode0xE7(); // RST 0x20
+    NUM_CYCLES opcode0xEF(); // RST 0x28
+    NUM_CYCLES opcode0xF7(); // RST 0x30
+    NUM_CYCLES opcode0xFF(); // RST 0x38
 
 
 
