@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+
+
 enum RegisterTypes
 {
     A,
@@ -23,7 +26,8 @@ enum RegisterTypes
 
 };
 
-enum FlagTypes {
+enum FlagTypes
+{
     ZERO,
     ADDSUB,
     CARRY,
@@ -34,3 +38,21 @@ enum FlagTypes {
 #define REGISTER uint8_t
 #define REGISTER16 uint16_t
 #define OPCODE uint8_t
+
+struct opcodeInfo
+{
+    const char *name;
+    int size;
+};
+
+#define NUM_OPCODES 256
+extern opcodeInfo opcodeDescriptionTable[NUM_OPCODES];
+struct RGB {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+
+	bool isEqual(RGB other) const {
+		return red == other.red && green == other.green && blue == other.blue;
+	}
+};

@@ -57,7 +57,7 @@ NUM_CYCLES CPU::opcode0x7E()
 NUM_CYCLES CPU::opcode0x3E()
 {
     load8bit(&registers.a, memory[registers.pc + 1]);
-    registers.pc++;
+    registers.pc += 1;
     return 8;
 } // LD A, NUMBER
 
@@ -112,7 +112,7 @@ NUM_CYCLES CPU::opcode0x46()
 NUM_CYCLES CPU::opcode0x06()
 {
     load8bit(&registers.b, memory[registers.pc + 1]);
-    registers.pc++;
+    registers.pc += 1;
     return 8;
 } // LD B, NUMBER
 
@@ -167,7 +167,7 @@ NUM_CYCLES CPU::opcode0x4E()
 NUM_CYCLES CPU::opcode0x0E()
 {
     load8bit(&registers.c, memory[registers.pc + 1]);
-    registers.pc++;
+    registers.pc += 1;
     return 8;
 } // LD C, NUMBER
 
@@ -222,7 +222,7 @@ NUM_CYCLES CPU::opcode0x56()
 NUM_CYCLES CPU::opcode0x16()
 {
     load8bit(&registers.d, memory[registers.pc + 1]);
-    registers.pc++;
+    registers.pc += 1;
     return 8;
 } // LD D, NUMBER
 
@@ -277,7 +277,7 @@ NUM_CYCLES CPU::opcode0x5E()
 NUM_CYCLES CPU::opcode0x1E()
 {
     load8bit(&registers.e, memory[registers.pc + 1]);
-    registers.pc++;
+    registers.pc += 1;
     return 8;
 } // LD E, NUMBER
 
@@ -332,7 +332,7 @@ NUM_CYCLES CPU::opcode0x66()
 NUM_CYCLES CPU::opcode0x26()
 {
     load8bit(&registers.h, memory[registers.pc + 1]);
-    registers.pc++;
+    registers.pc += 1;
     return 8;
 } // LD H, NUMBER
 
@@ -387,7 +387,7 @@ NUM_CYCLES CPU::opcode0x6E()
 NUM_CYCLES CPU::opcode0x2E()
 {
     load8bit(&registers.l, memory[registers.pc + 1]);
-    registers.pc++;
+    registers.pc += 1;
     return 8;
 } // LD L, NUMBER
 
@@ -436,7 +436,7 @@ NUM_CYCLES CPU::opcode0x75()
 NUM_CYCLES CPU::opcode0x36()
 {
     memory[registers.hl] = memory[registers.pc + 1];
-    registers.pc++;
+    registers.pc += 1;
     return 12;
 } // LD (HL), NUMBER
 
@@ -454,8 +454,9 @@ NUM_CYCLES CPU::opcode0x1A()
 
 NUM_CYCLES CPU::opcode0xFA()
 {
-    load8bit(&registers.a, memory[registers.pc + 1]);
-    registers.pc += 2;
+    uint16_t val = load16BitFromPC();
+    load8bit(&registers.a, memory[val]);
+    registers.pc += 2; 
     return 16;
 } // LD A, (NUMBER)
 
@@ -473,22 +474,23 @@ NUM_CYCLES CPU::opcode0x12()
 
 NUM_CYCLES CPU::opcode0xEA()
 {
-    memory[memory[registers.pc + 1]] = registers.a;
-    registers.pc += 2;
+    uint16_t val = load16BitFromPC();
+    memory[val] = registers.a;
+    registers.pc += 2; 
     return 16;
 } // LD (NUMBER), A
 
 NUM_CYCLES CPU::opcode0xF0()
 {
     load8bit(&registers.a, memory[0xFF00 + memory[registers.pc + 1]]);
-    registers.pc++;
+    registers.pc += 1;
     return 12;
 } // LD A, (C) (0xFF00 + n)
 
 NUM_CYCLES CPU::opcode0xE0()
 {
     memory[0xFF00 + memory[registers.pc + 1]] = registers.a;
-    registers.pc++;
+    registers.pc += 1;
     return 12;
 } // LD (C), A (0xFF00 + n)
 

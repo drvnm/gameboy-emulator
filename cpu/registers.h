@@ -79,5 +79,7 @@ struct Registers
 
     void numToFlags(uint8_t byte);
     uint8_t flagsToNum();
+
+    bool ime; // interrupt master enable
 };
 

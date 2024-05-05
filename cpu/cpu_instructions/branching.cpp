@@ -3,11 +3,6 @@
 
 #include <iostream>
 
-// NO OP
-NUM_CYCLES CPU::opcode0x00()
-{
-    return 4;
-}
 
 void CPU::set16bitRegister(REGISTER *reg, uint16_t value)
 {
@@ -19,13 +14,13 @@ NUM_CYCLES CPU::opcode0xC3()
 
     std::cout << "JUMP TO ADDRESS: " << std::hex << address << std::endl;
 
-    registers.pc = address;
+    registers.pc = address - 1;
     return 16;
 } // JUMP TO ADDRESS
 
 NUM_CYCLES CPU::opcode0xE9()
 {
-    registers.pc = registers.hl;
+    registers.pc = registers.hl - 1; 
     return 4;
 } // JUMP TO HL
 
@@ -35,10 +30,10 @@ NUM_CYCLES CPU::opcode0xC2()
 
     if (!registers.flags.zero)
     {
-        registers.pc = address;
+        registers.pc = address - 1;
         return 16;
     }
-    registers.pc += 3;
+    registers.pc += 2; 
     return 12;
 } // JUMP TO ADDRESS IF NOT ZERO
 
@@ -48,10 +43,10 @@ NUM_CYCLES CPU::opcode0xCA()
 
     if (registers.flags.zero)
     {
-        registers.pc = address;
+        registers.pc = address - 1;
         return 16;
     }
-    registers.pc += 3;
+    registers.pc += 2;
     return 12;
 } // JUMP TO ADDRESS IF ZERO
 
@@ -61,7 +56,7 @@ NUM_CYCLES CPU::opcode0xD2()
 
     if (!registers.flags.carry)
     {
-        registers.pc = address;
+        registers.pc = address - 1;
         return 16;
     }
     registers.pc += 2;
@@ -74,7 +69,7 @@ NUM_CYCLES CPU::opcode0xDA()
 
     if (registers.flags.carry)
     {
-        registers.pc = address;
+        registers.pc = address - 1;
         return 16;
     }
     registers.pc += 2;
@@ -84,7 +79,7 @@ NUM_CYCLES CPU::opcode0xDA()
 NUM_CYCLES CPU::opcode0x18()
 {
     int8_t offset = memory[registers.pc + 1];
-    registers.pc += offset;
+    registers.pc += offset - 1;
     return 12;
 } // JUMP TO PC + n
 
@@ -93,7 +88,7 @@ NUM_CYCLES CPU::opcode0x20()
     int8_t offset = memory[registers.pc + 1];
     if (!registers.flags.zero)
     {
-        registers.pc += offset;
+        registers.pc += offset - 1;
         return 12;
     }
     registers.pc += 1;
@@ -105,7 +100,7 @@ NUM_CYCLES CPU::opcode0x28()
     int8_t offset = memory[registers.pc + 1];
     if (registers.flags.zero)
     {
-        registers.pc += offset;
+        registers.pc += offset - 1;
         return 12;
     }
     registers.pc += 1;
@@ -117,7 +112,7 @@ NUM_CYCLES CPU::opcode0x30()
     int8_t offset = memory[registers.pc + 1];
     if (!registers.flags.carry)
     {
-        registers.pc += offset;
+        registers.pc += offset - 1;
         return 12;
     }
     registers.pc += 1;
@@ -129,7 +124,7 @@ NUM_CYCLES CPU::opcode0x38()
     int8_t offset = memory[registers.pc + 1];
     if (registers.flags.carry)
     {
-        registers.pc += offset;
+        registers.pc += offset - 1;
         return 12;
     }
     registers.pc += 1;
@@ -142,7 +137,7 @@ NUM_CYCLES CPU::opcode0xCD()
     uint16_t address = load16BitFromPC();
 
     push(registers.pc + 3);
-    registers.pc = address;
+    registers.pc = address - 1;
     return 24;
 } // CALL ADDRESS
 
@@ -153,10 +148,10 @@ NUM_CYCLES CPU::opcode0xC4()
     if (!registers.flags.zero)
     {
         push(registers.pc + 3);
-        registers.pc = address;
+        registers.pc = address - 1;
         return 24;
     }
-    registers.pc += 3;
+    registers.pc += 2;
     return 12;
 } // CALL ADDRESS IF NOT ZERO
 
@@ -167,10 +162,10 @@ NUM_CYCLES CPU::opcode0xCC()
     if (registers.flags.zero)
     {
         push(registers.pc + 3);
-        registers.pc = address;
+        registers.pc = address - 1;
         return 24;
     }
-    registers.pc += 3;
+    registers.pc += 2;
     return 12;
 } // CALL ADDRESS IF ZERO
 
@@ -180,11 +175,11 @@ NUM_CYCLES CPU::opcode0xD4()
 
     if (!registers.flags.carry)
     {
-        push(registers.pc + 2);
-        registers.pc = address;
+        push(registers.pc +3);
+        registers.pc = address - 1;
         return 24;
     }
-    registers.pc += 3;
+    registers.pc += 2;
     return 12;
 } // CALL ADDRESS IF NOT CARRY
 
@@ -194,18 +189,18 @@ NUM_CYCLES CPU::opcode0xDC()
 
     if (registers.flags.carry)
     {
-        push(registers.pc + 2);
+        push(registers.pc + 3);
         registers.pc = address;
         return 24;
     }
-    registers.pc += 3;
+    registers.pc += 2; 
     return 12;
 } // CALL ADDRESS IF CARRY
 
 // RETURN INSTRUCTIONS
 NUM_CYCLES CPU::opcode0xC9()
 {
-    registers.pc = pop();
+    registers.pc = pop() - 1;
     return 16;
 } // RETURN
 
@@ -213,7 +208,7 @@ NUM_CYCLES CPU::opcode0xC0()
 {
     if (!registers.flags.zero)
     {
-        registers.pc = pop();
+        registers.pc = pop() - 1;
         return 20;
     }
     return 8;
@@ -223,7 +218,7 @@ NUM_CYCLES CPU::opcode0xC8()
 {
     if (registers.flags.zero)
     {
-        registers.pc = pop();
+        registers.pc = pop() - 1;
         return 20;
     }
     return 8;
@@ -233,7 +228,7 @@ NUM_CYCLES CPU::opcode0xD0()
 {
     if (!registers.flags.carry)
     {
-        registers.pc = pop();
+        registers.pc = pop() - 1;
         return 20;
     }
     return 8;
@@ -243,7 +238,7 @@ NUM_CYCLES CPU::opcode0xD8()
 {
     if (registers.flags.carry)
     {
-        registers.pc = pop();
+        registers.pc = pop() - 1;
         return 20;
     }
     return 8;

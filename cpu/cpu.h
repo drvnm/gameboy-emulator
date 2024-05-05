@@ -5,10 +5,14 @@
 
 #include "registers.h"
 #include "instruction.h"
+#include "../display.h"
 
 // emulates the CPU of the gameboy (the sharp LR35902)
 class CPU
 {
+    // display stuff
+    Display display;
+
     std::vector<uint8_t> rom;
     short (CPU::*opcodes[0xFF])(); // array of function pointers to the opcodes
     Registers registers;           // 8-bit registers
@@ -23,6 +27,7 @@ class CPU
 
     // helper functions
     uint16_t load16BitFromPC();
+    void reset();
 
     // NO OP
     NUM_CYCLES opcode0x00();
@@ -249,6 +254,17 @@ class CPU
     NUM_CYCLES opcode0x27(); // DAA
     // CPL INSTRUCTIONS
     NUM_CYCLES opcode0x2F(); // CPL
+
+    // SINGLE BIT INSTRUCTIONS
+
+    // CONTROL INSTRUCTIONS
+    NUM_CYCLES opcode0x3F(); // CCF (CY = CY XOR 1)
+    NUM_CYCLES opcode0x37(); // SCF (CY = 1)
+    NUM_CYCLES opcode0x76(); // HALT
+    NUM_CYCLES opcode0x10(); // STOP
+    NUM_CYCLES opcode0xF3(); // DI
+    NUM_CYCLES opcode0xFB(); // EI
+
 
     // JUMP INSTRUCTIONS
     void set16bitRegister(REGISTER *reg, uint16_t value);

@@ -1,5 +1,5 @@
 #include "../cpu.h"
-#include "../../common/defs.h" 
+#include "../../common/defs.h"
 
 void CPU::add8bit(REGISTER *reg, uint8_t value)
 {
@@ -175,8 +175,8 @@ NUM_CYCLES CPU::opcode0x8E()
 
 NUM_CYCLES CPU::opcode0xCE()
 {
+    registers.pc += 1;
     adc8bit(&registers.a, rom[registers.pc]);
-    registers.pc++;
     return 8;
 } // ADC A n
 
@@ -264,8 +264,8 @@ NUM_CYCLES CPU::opcode0x96()
 
 NUM_CYCLES CPU::opcode0xD6()
 {
+    registers.pc += 1;
     sub8bit(&registers.a, rom[registers.pc]);
-    registers.pc++;
     return 8;
 } // SUB A n
 // SBC INSTRUCTIONS
@@ -355,8 +355,8 @@ NUM_CYCLES CPU::opcode0x9E()
 
 NUM_CYCLES CPU::opcode0xDE()
 {
+    registers.pc += 1;
     sbc8bit(&registers.a, rom[registers.pc]);
-    registers.pc++;
     return 8;
 } // SBC A n
 
@@ -428,8 +428,8 @@ NUM_CYCLES CPU::opcode0xA6()
 
 NUM_CYCLES CPU::opcode0xE6()
 {
+    registers.pc += 1;
     and8bit(&registers.a, rom[registers.pc]);
-    registers.pc++;
     return 8;
 } // AND A n
 
@@ -501,8 +501,8 @@ NUM_CYCLES CPU::opcode0xB6()
 
 NUM_CYCLES CPU::opcode0xF6()
 {
+    registers.pc += 1;
     or8bit(&registers.a, rom[registers.pc]);
-    registers.pc++;
     return 8;
 } // OR A n
 
@@ -573,8 +573,8 @@ NUM_CYCLES CPU::opcode0xAE()
 
 NUM_CYCLES CPU::opcode0xEE()
 {
+    registers.pc += 1;
     xor8bit(&registers.a, rom[registers.pc]);
-    registers.pc++;
     return 8;
 } // XOR A n
 
@@ -648,8 +648,8 @@ NUM_CYCLES CPU::opcode0xBE()
 
 NUM_CYCLES CPU::opcode0xFE()
 {
+    registers.pc += 1;
     cp8bit(&registers.a, rom[registers.pc]);
-    registers.pc++;
     return 8;
 } // CP A n
 

@@ -1,6 +1,10 @@
 #include "display.h"
 #include <iostream>
 
+RGB Display::CLASSIC_PALLETE[4] = { { 155,188,15 }, { 139,172,15 }, { 48,98,48 }, { 15,56,15 } };
+RGB Display::GREY_PALLETE[4] = { { 255,255,255 },{ 0xCC,0xCC,0xCC },{ 0x77,0x77,0x77 }, { 0x0,0x0,0x0 } };
+
+
 Display::Display()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -9,14 +13,7 @@ Display::Display()
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    // clear the display
-    for (int x = 0; x < SCREEN_WIDTH; x++)
-    {
-        for (int y = 0; y < SCREEN_HEIGHT; y++)
-        {
-            display[x][y] = false;
-        }
-    }
+  
 }
 
 Display::~Display()
@@ -36,37 +33,5 @@ void Display::clear()
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    for (int x = 0; x < SCREEN_WIDTH; x++)
-    {
-        for (int y = 0; y < SCREEN_HEIGHT; y++)
-        {
-            display[x][y] = false;
-        }
-    }
-}
-
-// xor the whole display with the sprite
-void Display::setPixel(int x, int y, bool on)
-{
-    display[x][y] = on;
-
-    SDL_Rect rect;
-    rect.x = x;
-    rect.y = y;
-    rect.w = 1;
-    rect.h = 1;
-    if (on)
-    {
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    }
-    else
-    {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    }
-    SDL_RenderFillRect(renderer, &rect);
-}
-
-bool Display::getPixel(int x, int y)
-{
-    return display[x][y];
+   
 }

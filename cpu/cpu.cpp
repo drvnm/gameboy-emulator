@@ -4,6 +4,7 @@
 
 CPU::CPU(std::vector<uint8_t> rom) : rom(rom)
 {
+    reset();
     registers.reset();
     setupOpcodes();
 
@@ -14,20 +15,58 @@ CPU::CPU(std::vector<uint8_t> rom) : rom(rom)
     }
 }
 
+void CPU::reset()
+{
+    // TIMA, TMA, TAC
+    for (int i = 0xFF05; i <= 0xFF07; i++)
+    {
+        memory[i] = 0x00;
+    }
+
+    memory[0xFF25] = 0xF3; // NR51
+    memory[0xFF26] = 0x00; // idk ??
+    memory[0xFF40] = 0x91; // LCDC control
+    memory[0xFF42] = 0x00; // SCY
+    memory[0xFF43] = 0x00; // SCX
+    memory[0xFF45] = 0x00; // LYC
+    memory[0xFF47] = 0xFC; // BGP
+    memory[0xFF48] = 0xFF; // OBP0
+    memory[0xFF49] = 0xFF; // OBP1
+    memory[0xFF4A] = 0x00; // WY
+    memory[0xFF4B] = 0x00; // WX
+    memory[0xFFFF] = 0x00; // IE
+}
+
 void CPU::execute()
 {
     while (registers.pc < rom.size())
     {
-        executeInstruction(rom[registers.pc]);
-        registers.pc++;
+        OPCODE opcode = rom[registers.pc];
+        executeInstruction(opcode);
+        registers.pc += 1;
     }
 }
 
 void CPU::executeInstruction(OPCODE opcode)
 {
-    std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << std::endl;
     if (opcodes[opcode] != nullptr)
+    {
+        uint8_t firstByte, secondByte;
+        if (opcodeDescriptionTable[opcode].size == 1)
+        {
+            firstByte = rom[registers.pc + 1];
+            std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << std::endl;
+        }
+        else if (opcodeDescriptionTable[opcode].size == 2)
+        {
+            firstByte = rom[registers.pc + 1];
+            secondByte = rom[registers.pc + 2];
+            std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << " " << std::hex << (int)secondByte << std::endl;
+        } else {
+            std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << std::endl;
+        }
         (this->*opcodes[opcode])();
+    }
     else
     {
         std::cout << "Opcode not implemented" << std::endl;
@@ -37,9 +76,6 @@ void CPU::executeInstruction(OPCODE opcode)
 
 void CPU::setupOpcodes()
 {
-    // NOP
-    opcodes[0x00] = &CPU::opcode0x00;
-    
     // LOAD INSTRUCTIONS
     opcodes[0x7F] = &CPU::opcode0x7F;
     opcodes[0x78] = &CPU::opcode0x78;
@@ -252,6 +288,15 @@ void CPU::setupOpcodes()
     opcodes[0x2D] = &CPU::opcode0x2D;
     opcodes[0x35] = &CPU::opcode0x35;
 
+    // CONTROL INSTRUCTIONS
+    opcodes[0x3F] = &CPU::opcode0x3F;
+    opcodes[0x37] = &CPU::opcode0x37;
+    opcodes[0x00] = &CPU::opcode0x00;
+    opcodes[0x76] = &CPU::opcode0x76;
+    opcodes[0x10] = &CPU::opcode0x10;
+    opcodes[0xF3] = &CPU::opcode0xF3;
+    opcodes[0xFB] = &CPU::opcode0xFB;
+
     // DAA and CPL INSTRUCTIONS
     opcodes[0x27] = &CPU::opcode0x27;
     opcodes[0x2F] = &CPU::opcode0x2F;
@@ -308,6 +353,7 @@ uint16_t CPU::pop()
 
 uint16_t CPU::load16BitFromPC()
 {
-    uint16_t value = memory[registers.pc + 1] | (memory[registers.pc + 2] << 8);
-    return value;
+    uint8_t low = rom[registers.pc + 1];
+    uint8_t high = rom[registers.pc + 2];
+    return (high << 8) | low;
 }
