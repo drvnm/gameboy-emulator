@@ -5,7 +5,6 @@
 
 class Cartridge {
 private:
-    std::vector<uint8_t> rom;
     std::string title;
     std::uint8_t type;
     std::uint8_t romSize;
@@ -13,7 +12,6 @@ private:
     void parseAndCheckHeader();
 
 public:
-    Cartridge(std::vector<uint8_t> rom);
-    
-
+    Cartridge(std::string romFile);
+    std::vector<uint8_t> rom;
 };

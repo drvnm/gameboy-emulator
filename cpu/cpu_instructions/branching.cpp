@@ -78,14 +78,14 @@ NUM_CYCLES CPU::opcode0xDA()
 
 NUM_CYCLES CPU::opcode0x18()
 {
-    int8_t offset = memory[registers.pc + 1];
+    int8_t offset = memory->readByte(registers.pc + 1);
     registers.pc += offset - 1;
     return 12;
 } // JUMP TO PC + n
 
 NUM_CYCLES CPU::opcode0x20()
 {
-    int8_t offset = memory[registers.pc + 1];
+    int8_t offset = memory->readByte(registers.pc + 1);
     if (!registers.flags.zero)
     {
         registers.pc += offset - 1;
@@ -97,7 +97,7 @@ NUM_CYCLES CPU::opcode0x20()
 
 NUM_CYCLES CPU::opcode0x28()
 {
-    int8_t offset = memory[registers.pc + 1];
+    int8_t offset = memory->readByte(registers.pc + 1);
     if (registers.flags.zero)
     {
         registers.pc += offset - 1;
@@ -109,7 +109,7 @@ NUM_CYCLES CPU::opcode0x28()
 
 NUM_CYCLES CPU::opcode0x30()
 {
-    int8_t offset = memory[registers.pc + 1];
+    int8_t offset = memory->readByte(registers.pc + 1);
     if (!registers.flags.carry)
     {
         registers.pc += offset - 1;
@@ -121,7 +121,7 @@ NUM_CYCLES CPU::opcode0x30()
 
 NUM_CYCLES CPU::opcode0x38()
 {
-    int8_t offset = memory[registers.pc + 1];
+    int8_t offset = memory->readByte(registers.pc + 1);
     if (registers.flags.carry)
     {
         registers.pc += offset - 1;

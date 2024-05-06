@@ -2,70 +2,102 @@
 
 #include "cpu.h"
 
-CPU::CPU(std::vector<uint8_t> rom) : rom(rom)
+CPU::CPU(Memory *memory) : memory(memory)
 {
     reset();
     registers.reset();
     setupOpcodes();
-
-    // load the rom into memory
-    for (size_t i = 0; i < rom.size(); i++)
-    {
-        memory[i] = rom[i];
-    }
 }
 
 void CPU::reset()
 {
-    // TIMA, TMA, TAC
-    for (int i = 0xFF05; i <= 0xFF07; i++)
-    {
-        memory[i] = 0x00;
-    }
-
-    memory[0xFF25] = 0xF3; // NR51
-    memory[0xFF26] = 0x00; // idk ??
-    memory[0xFF40] = 0x91; // LCDC control
-    memory[0xFF42] = 0x00; // SCY
-    memory[0xFF43] = 0x00; // SCX
-    memory[0xFF45] = 0x00; // LYC
-    memory[0xFF47] = 0xFC; // BGP
-    memory[0xFF48] = 0xFF; // OBP0
-    memory[0xFF49] = 0xFF; // OBP1
-    memory[0xFF4A] = 0x00; // WY
-    memory[0xFF4B] = 0x00; // WX
-    memory[0xFFFF] = 0x00; // IE
 }
 
-void CPU::execute()
+void CPU::requestInterrupt(uint8_t interrupt)
 {
-    while (registers.pc < rom.size())
+    uint8_t interruptFlag = memory->readByte(0xFF0F);
+    interruptFlag = setBit(interruptFlag, interrupt);
+    memory->writeByte(0xFF0F, interruptFlag);
+}
+
+void CPU::serviceInterrupt(uint8_t interrupt)
+{
+    masterInterruptEnable = false;
+    uint8_t interruptFlag = memory->readByte(0xFF0F);
+    interruptFlag = clearBit(interruptFlag, interrupt);
+    memory->writeByte(0xFF0F, interruptFlag);
+
+    push(registers.pc);
+    switch (interrupt)
     {
-        OPCODE opcode = rom[registers.pc];
-        executeInstruction(opcode);
-        registers.pc += 1;
+    case 0:
+        registers.pc = 0x40;
+        break;
+    case 1:
+        registers.pc = 0x48;
+        break;
+    case 2:
+        registers.pc = 0x50;
+        break;
+    case 3:
+        registers.pc = 0x58;
+        break;
+    case 4:
+        registers.pc = 0x60;
+        break;
+    default:
+        break;
     }
 }
 
-void CPU::executeInstruction(OPCODE opcode)
+void CPU::handleInterrupts()
+{
+    if(!masterInterruptEnable) return;
+    uint8_t interruptFlag = memory->readByte(0xFF0F);
+    uint8_t interruptEnable = memory->readByte(0xFFFF);
+
+    if(interruptFlag == 0) return;
+    for (int i = 0; i < 5; i++)
+    {
+       if(bitIsSet(interruptFlag, i)) {
+        if(bitIsSet(interruptEnable, i)) {
+            std::cout << "Servicing interrupt: " << i << std::endl;
+           serviceInterrupt(i);
+        }
+       }
+    }
+    
+}
+
+uint8_t CPU::step()
+{
+    OPCODE opcode = memory->readByte(registers.pc);
+    uint8_t cycles = executeInstruction(opcode);
+    registers.pc += 1;
+    return cycles;
+}
+
+uint8_t CPU::executeInstruction(OPCODE opcode)
 {
     if (opcodes[opcode] != nullptr)
     {
         uint8_t firstByte, secondByte;
         if (opcodeDescriptionTable[opcode].size == 1)
         {
-            firstByte = rom[registers.pc + 1];
+            firstByte = memory->map[registers.pc + 1];
             std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << std::endl;
         }
         else if (opcodeDescriptionTable[opcode].size == 2)
         {
-            firstByte = rom[registers.pc + 1];
-            secondByte = rom[registers.pc + 2];
+            firstByte = memory->map[registers.pc + 1];
+            secondByte = memory->map[registers.pc + 2];
             std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << " " << std::hex << (int)secondByte << std::endl;
-        } else {
+        }
+        else
+        {
             std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << std::endl;
         }
-        (this->*opcodes[opcode])();
+        return (this->*opcodes[opcode])();
     }
     else
     {
@@ -339,21 +371,23 @@ void CPU::setupOpcodes()
 // stack operations
 void CPU::push(uint16_t value)
 {
-    memory[registers.sp - 1] = (value >> 8) & 0xFF;
-    memory[registers.sp - 2] = value & 0xFF;
+    memory->writeByte(registers.sp - 1, (value >> 8) & 0xFF);
+    memory->writeByte(registers.sp - 2, value & 0xFF);
     registers.sp -= 2;
 }
 
 uint16_t CPU::pop()
 {
-    uint16_t value = memory[registers.sp] | (memory[registers.sp + 1] << 8);
+    uint8_t low = memory->readByte(registers.sp);
+    uint8_t high = memory->readByte(registers.sp + 1);
+    uint16_t value = (high << 8) | low;
     registers.sp += 2;
     return value;
 }
 
 uint16_t CPU::load16BitFromPC()
 {
-    uint8_t low = rom[registers.pc + 1];
-    uint8_t high = rom[registers.pc + 2];
+    uint8_t low = memory->readByte(registers.pc + 1);
+    uint8_t high = memory->readByte(registers.pc + 2);
     return (high << 8) | low;
 }

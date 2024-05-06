@@ -78,13 +78,13 @@ NUM_CYCLES CPU::opcode0x85()
 
 NUM_CYCLES CPU::opcode0x86()
 {
-    add8bit(&registers.a, rom[registers.hl]);
+    add8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // ADD A (HL)
 
 NUM_CYCLES CPU::opcode0xC6()
 {
-    add8bit(&registers.a, rom[registers.pc + 1]);
+    add8bit(&registers.a, memory->readByte(registers.pc + 1));
     return 8;
 } // ADD A n
 
@@ -169,14 +169,14 @@ NUM_CYCLES CPU::opcode0x8D()
 
 NUM_CYCLES CPU::opcode0x8E()
 {
-    adc8bit(&registers.a, rom[registers.hl]);
+    adc8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // ADC A (HL)
 
 NUM_CYCLES CPU::opcode0xCE()
 {
     registers.pc += 1;
-    adc8bit(&registers.a, rom[registers.pc]);
+    adc8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // ADC A n
 
@@ -258,14 +258,14 @@ NUM_CYCLES CPU::opcode0x95()
 
 NUM_CYCLES CPU::opcode0x96()
 {
-    sub8bit(&registers.a, rom[registers.hl]);
+    sub8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // SUB A (HL)
 
 NUM_CYCLES CPU::opcode0xD6()
 {
     registers.pc += 1;
-    sub8bit(&registers.a, rom[registers.pc]);
+    sub8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // SUB A n
 // SBC INSTRUCTIONS
@@ -349,14 +349,14 @@ NUM_CYCLES CPU::opcode0x9D()
 
 NUM_CYCLES CPU::opcode0x9E()
 {
-    sbc8bit(&registers.a, rom[registers.hl]);
+    sbc8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // SBC A (HL)
 
 NUM_CYCLES CPU::opcode0xDE()
 {
     registers.pc += 1;
-    sbc8bit(&registers.a, rom[registers.pc]);
+    sbc8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // SBC A n
 
@@ -422,14 +422,14 @@ NUM_CYCLES CPU::opcode0xA5()
 
 NUM_CYCLES CPU::opcode0xA6()
 {
-    and8bit(&registers.a, rom[registers.hl]);
+    and8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // AND A (HL)
 
 NUM_CYCLES CPU::opcode0xE6()
 {
     registers.pc += 1;
-    and8bit(&registers.a, rom[registers.pc]);
+    and8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // AND A n
 
@@ -495,14 +495,14 @@ NUM_CYCLES CPU::opcode0xB5()
 
 NUM_CYCLES CPU::opcode0xB6()
 {
-    or8bit(&registers.a, rom[registers.hl]);
+    or8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // OR A (HL)
 
 NUM_CYCLES CPU::opcode0xF6()
 {
     registers.pc += 1;
-    or8bit(&registers.a, rom[registers.pc]);
+    or8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // OR A n
 
@@ -567,14 +567,14 @@ NUM_CYCLES CPU::opcode0xAD()
 
 NUM_CYCLES CPU::opcode0xAE()
 {
-    xor8bit(&registers.a, rom[registers.hl]);
+    xor8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // XOR A (HL)
 
 NUM_CYCLES CPU::opcode0xEE()
 {
     registers.pc += 1;
-    xor8bit(&registers.a, rom[registers.pc]);
+    xor8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // XOR A n
 
@@ -642,14 +642,14 @@ NUM_CYCLES CPU::opcode0xBD()
 
 NUM_CYCLES CPU::opcode0xBE()
 {
-    cp8bit(&registers.a, rom[registers.hl]);
+    cp8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // CP A (HL)
 
 NUM_CYCLES CPU::opcode0xFE()
 {
     registers.pc += 1;
-    cp8bit(&registers.a, rom[registers.pc]);
+    cp8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // CP A n
 
@@ -716,7 +716,9 @@ NUM_CYCLES CPU::opcode0x2C()
 
 NUM_CYCLES CPU::opcode0x34()
 {
-    inc8bit(&rom[registers.hl]);
+    uint8_t value = memory->readByte(registers.hl);
+    inc8bit(&value);
+    memory->writeByte(registers.hl, value);
     return 12;
 } // INC (HL)
 
@@ -783,7 +785,9 @@ NUM_CYCLES CPU::opcode0x2D()
 
 NUM_CYCLES CPU::opcode0x35()
 {
-    dec8bit(&rom[registers.hl]);
+    uint8_t value = memory->readByte(registers.hl);
+    dec8bit(&value);
+    memory->writeByte(registers.hl, value);
     return 12;
 } // DEC (HL)
 

@@ -260,3 +260,17 @@ opcodeInfo opcodeDescriptionTable[NUM_OPCODES] = {
 	{ "RST 38H", 0 }
 };
 
+bool bitIsSet(uint8_t byte, int bit)
+{
+	return (byte & (1 << bit)) != 0;
+}
+
+uint8_t setBit(uint8_t byte, int bit)
+{
+	return byte | (1 << bit);
+}
+
+uint8_t clearBit(uint8_t byte, int bit)
+{
+	return byte & ~(1 << bit);
+}

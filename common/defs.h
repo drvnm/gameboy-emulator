@@ -56,3 +56,9 @@ struct RGB {
 		return red == other.red && green == other.green && blue == other.blue;
 	}
 };
+
+
+// returns true if the bit at position is set
+bool bitIsSet(uint8_t byte, int position);
+uint8_t setBit(uint8_t byte, int position);
+uint8_t clearBit(uint8_t byte, int position);

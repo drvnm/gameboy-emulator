@@ -4,22 +4,23 @@
 #include <map>
 
 #include "registers.h"
-#include "instruction.h"
-#include "../display.h"
+#include "../memory/memory.h"
 
 // emulates the CPU of the gameboy (the sharp LR35902)
 class CPU
 {
+public:
     // display stuff
-    Display display;
-
-    std::vector<uint8_t> rom;
+    Memory *memory;
     short (CPU::*opcodes[0xFF])(); // array of function pointers to the opcodes
     Registers registers;           // 8-bit registers
     void setupOpcodes();           // sets up the opcodes
-    uint8_t memory[0xFFFF];        // 64KB of memory
 
-    void executeInstruction(OPCODE instruction); // fetches and executes the instruction
+    uint8_t executeInstruction(OPCODE instruction); // fetches and executes the instruction
+    void requestInterrupt(uint8_t interrupt);       // requests an interrupt
+    void handleInterrupts();                        // handles interrupts
+    void serviceInterrupt(uint8_t interrupt);       // services an interrupt
+    bool masterInterruptEnable = true;              // master interrupt enable flag
 
     // stack operations
     void push(uint16_t value);
@@ -31,7 +32,7 @@ class CPU
 
     // NO OP
     NUM_CYCLES opcode0x00();
-    
+
     // LOAD INSTRUCTIONS
     void load8bit(REGISTER *reg, uint8_t value);
     NUM_CYCLES opcode0x7F(); // LD A, AF.HIGH
@@ -130,7 +131,6 @@ class CPU
     NUM_CYCLES opcode0xF8(); // LD HL, SP + NUMBER
     NUM_CYCLES opcode0x08(); // LD (NUMBER), SP
 
-
     // PUSH AND POP INSTRUCTIONS
     NUM_CYCLES opcode0xF5(); // PUSH AF
     NUM_CYCLES opcode0xC5(); // PUSH BC
@@ -140,7 +140,6 @@ class CPU
     NUM_CYCLES opcode0xC1(); // POP BC
     NUM_CYCLES opcode0xD1(); // POP DE
     NUM_CYCLES opcode0xE1(); // POP HL
-
 
     // ADD INSTRUCTIONS
     void add8bit(REGISTER *reg, uint8_t value);
@@ -265,7 +264,6 @@ class CPU
     NUM_CYCLES opcode0xF3(); // DI
     NUM_CYCLES opcode0xFB(); // EI
 
-
     // JUMP INSTRUCTIONS
     void set16bitRegister(REGISTER *reg, uint16_t value);
     NUM_CYCLES opcode0xC3(); // JP NUMBER
@@ -303,9 +301,6 @@ class CPU
     NUM_CYCLES opcode0xF7(); // RST 0x30
     NUM_CYCLES opcode0xFF(); // RST 0x38
 
-
-
-public:
-    CPU(std::vector<uint8_t> rom);
-    void execute();
+    CPU(Memory *memory);
+    uint8_t step();
 };

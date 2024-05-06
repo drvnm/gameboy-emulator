@@ -50,13 +50,13 @@ NUM_CYCLES CPU::opcode0x7D()
 
 NUM_CYCLES CPU::opcode0x7E()
 {
-    load8bit(&registers.a, memory[registers.hl]);
+    load8bit(&registers.a, memory->readByte(registers.hl));
     return 8;
 } // LD A, (HL)
 
 NUM_CYCLES CPU::opcode0x3E()
 {
-    load8bit(&registers.a, memory[registers.pc + 1]);
+    load8bit(&registers.a, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 8;
 } // LD A, NUMBER
@@ -105,13 +105,13 @@ NUM_CYCLES CPU::opcode0x45()
 
 NUM_CYCLES CPU::opcode0x46()
 {
-    load8bit(&registers.b, memory[registers.hl]);
+    load8bit(&registers.b, memory->readByte(registers.hl));
     return 8;
 } // LD B, (HL)
 
 NUM_CYCLES CPU::opcode0x06()
 {
-    load8bit(&registers.b, memory[registers.pc + 1]);
+    load8bit(&registers.b, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 8;
 } // LD B, NUMBER
@@ -160,13 +160,13 @@ NUM_CYCLES CPU::opcode0x4D()
 
 NUM_CYCLES CPU::opcode0x4E()
 {
-    load8bit(&registers.c, memory[registers.hl]);
+    load8bit(&registers.c, memory->readByte(registers.hl));
     return 8;
 } // LD C, (HL)
 
 NUM_CYCLES CPU::opcode0x0E()
 {
-    load8bit(&registers.c, memory[registers.pc + 1]);
+    load8bit(&registers.c, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 8;
 } // LD C, NUMBER
@@ -215,13 +215,13 @@ NUM_CYCLES CPU::opcode0x55()
 
 NUM_CYCLES CPU::opcode0x56()
 {
-    load8bit(&registers.d, memory[registers.hl]);
+    load8bit(&registers.d, memory->readByte(registers.hl));
     return 8;
 } // LD D, (HL)
 
 NUM_CYCLES CPU::opcode0x16()
 {
-    load8bit(&registers.d, memory[registers.pc + 1]);
+    load8bit(&registers.d, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 8;
 } // LD D, NUMBER
@@ -270,13 +270,13 @@ NUM_CYCLES CPU::opcode0x5D()
 
 NUM_CYCLES CPU::opcode0x5E()
 {
-    load8bit(&registers.e, memory[registers.hl]);
+    load8bit(&registers.e, memory->readByte(registers.hl));
     return 8;
 } // LD E, (HL)
 
 NUM_CYCLES CPU::opcode0x1E()
 {
-    load8bit(&registers.e, memory[registers.pc + 1]);
+    load8bit(&registers.e, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 8;
 } // LD E, NUMBER
@@ -325,13 +325,13 @@ NUM_CYCLES CPU::opcode0x65()
 
 NUM_CYCLES CPU::opcode0x66()
 {
-    load8bit(&registers.h, memory[registers.hl]);
+    load8bit(&registers.h, memory->readByte(registers.hl));
     return 8;
 } // LD H, (HL)
 
 NUM_CYCLES CPU::opcode0x26()
 {
-    load8bit(&registers.h, memory[registers.pc + 1]);
+    load8bit(&registers.h, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 8;
 } // LD H, NUMBER
@@ -380,156 +380,156 @@ NUM_CYCLES CPU::opcode0x6D()
 
 NUM_CYCLES CPU::opcode0x6E()
 {
-    load8bit(&registers.l, memory[registers.hl]);
+    load8bit(&registers.l, memory->readByte(registers.hl));
     return 8;
 } // LD L, (HL)
 
 NUM_CYCLES CPU::opcode0x2E()
 {
-    load8bit(&registers.l, memory[registers.pc + 1]);
+    load8bit(&registers.l, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 8;
 } // LD L, NUMBER
 
 NUM_CYCLES CPU::opcode0x77()
 {
-    memory[registers.hl] = registers.a;
+    memory->writeByte(registers.hl, registers.a);
     return 8;
 } // LD (HL), AF.HIGH
 
 NUM_CYCLES CPU::opcode0x70()
 {
-    memory[registers.hl] = registers.b;
+    memory->writeByte(registers.hl, registers.b);
     return 8;
 } // LD (HL), BC.HIGH
 
 NUM_CYCLES CPU::opcode0x71()
 {
-    memory[registers.hl] = registers.c;
+    memory->writeByte(registers.hl, registers.c);
     return 8;
 } // LD (HL), BC.LOW
 
 NUM_CYCLES CPU::opcode0x72()
 {
-    memory[registers.hl] = registers.d;
+    memory->writeByte(registers.hl, registers.d);
     return 8;
 } // LD (HL), DE.HIGH
 
 NUM_CYCLES CPU::opcode0x73()
 {
-    memory[registers.hl] = registers.e;
+    memory->writeByte(registers.hl, registers.e);
     return 8;
 } // LD (HL), DE.LOW
 
 NUM_CYCLES CPU::opcode0x74()
 {
-    memory[registers.hl] = registers.h;
+    memory->writeByte(registers.hl, registers.h);
     return 8;
 } // LD (HL), HL.HIGH
 
 NUM_CYCLES CPU::opcode0x75()
 {
-    memory[registers.hl] = registers.l;
+    memory->writeByte(registers.hl, registers.l);
     return 8;
 } // LD (HL), HL.LOW
 
 NUM_CYCLES CPU::opcode0x36()
 {
-    memory[registers.hl] = memory[registers.pc + 1];
+    memory->writeByte(registers.hl, memory->readByte(registers.pc + 1));
     registers.pc += 1;
     return 12;
 } // LD (HL), NUMBER
 
 NUM_CYCLES CPU::opcode0x0A()
 {
-    load8bit(&registers.a, memory[registers.bc]);
+    load8bit(&registers.a, memory->readByte(registers.bc));
     return 8;
 } // LD A, (BC)
 
 NUM_CYCLES CPU::opcode0x1A()
 {
-    load8bit(&registers.a, memory[registers.de]);
+    load8bit(&registers.a, memory->readByte(registers.de));
     return 8;
 } // LD A, (DE)
 
 NUM_CYCLES CPU::opcode0xFA()
 {
     uint16_t val = load16BitFromPC();
-    load8bit(&registers.a, memory[val]);
-    registers.pc += 2; 
+    load8bit(&registers.a, memory->readByte(val));
+    registers.pc += 2;
     return 16;
 } // LD A, (NUMBER)
 
 NUM_CYCLES CPU::opcode0x02()
 {
-    memory[registers.bc] = registers.a;
+    memory->writeByte(registers.bc, registers.a);
     return 8;
 } // LD (BC), A
 
 NUM_CYCLES CPU::opcode0x12()
 {
-    memory[registers.de] = registers.a;
+    memory->writeByte(registers.de, registers.a);
     return 8;
 } // LD (DE), A
 
 NUM_CYCLES CPU::opcode0xEA()
 {
     uint16_t val = load16BitFromPC();
-    memory[val] = registers.a;
-    registers.pc += 2; 
+    memory->writeByte(val, registers.a);
+    registers.pc += 2;
     return 16;
 } // LD (NUMBER), A
 
 NUM_CYCLES CPU::opcode0xF0()
 {
-    load8bit(&registers.a, memory[0xFF00 + memory[registers.pc + 1]]);
+    load8bit(&registers.a, memory->readByte(0xFF00 + memory->readByte(registers.pc + 1)));
     registers.pc += 1;
     return 12;
 } // LD A, (C) (0xFF00 + n)
 
 NUM_CYCLES CPU::opcode0xE0()
 {
-    memory[0xFF00 + memory[registers.pc + 1]] = registers.a;
+    memory->writeByte(0xFF00 + memory->readByte(registers.pc + 1), registers.a);
     registers.pc += 1;
     return 12;
 } // LD (C), A (0xFF00 + n)
 
 NUM_CYCLES CPU::opcode0xF2()
 {
-    load8bit(&registers.a, memory[0xFF00 + registers.c]);
+    load8bit(&registers.a, memory->readByte(0xFF00 + registers.c));
     return 8;
 } // LD A, (C) (0xFF00 + C)
 
 NUM_CYCLES CPU::opcode0xE2()
 {
-    memory[0xFF00 + registers.c] = registers.a;
+    memory->writeByte(0xFF00 + registers.c, registers.a);
     return 8;
 } // LD (C), A (0xFF00 + C)
 
 NUM_CYCLES CPU::opcode0x3A()
 {
-    load8bit(&registers.a, memory[registers.hl]);
+    load8bit(&registers.a, memory->readByte(registers.hl));
     registers.hl--;
     return 8;
 } // LDD A, (HL)
 
 NUM_CYCLES CPU::opcode0x32()
 {
-    memory[registers.hl] = registers.a;
+    memory->writeByte(registers.hl, registers.a);
     registers.hl--;
     return 8;
 } // LDD (HL), A
 
 NUM_CYCLES CPU::opcode0x2A()
 {
-    load8bit(&registers.a, memory[registers.hl]);
+    load8bit(&registers.a, memory->readByte(registers.hl));
     registers.hl++;
     return 8;
 } // LDI A, (HL)
 
 NUM_CYCLES CPU::opcode0x22()
 {
-    memory[registers.hl] = registers.a;
+    memory->writeByte(registers.hl, registers.a);
     registers.hl++;
     return 8;
 } // LDI (HL), A

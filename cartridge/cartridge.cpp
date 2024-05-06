@@ -2,11 +2,24 @@
 
 #include <stdexcept> 
 #include <iostream>
+#include <fstream>
 
-Cartridge::Cartridge(std::vector<uint8_t> rom) {
+Cartridge::Cartridge(std::string romFile) {
     std::cout << "Loading rom..." << std::endl;
+    
+    std::vector<uint8_t> rom;
+    std::ifstream file(romFile, std::ios::binary);
+    
+    while (!file.eof())
+    {
+        uint8_t byte;
+        file.read(reinterpret_cast<char *>(&byte), sizeof(byte));
+        rom.push_back(byte);
+    }
+
     this->rom = rom;
     parseAndCheckHeader();
+
     std::cout << "Title: " << title << std::endl;
     std::cout << "Type: " << (int)type << std::endl;
     std::cout << "ROM Size: " << (int)romSize << std::endl;
