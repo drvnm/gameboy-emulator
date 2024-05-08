@@ -87,8 +87,8 @@ NUM_CYCLES CPU::opcode0x20()
 {
     int8_t offset = memory->readByte(registers.pc + 1);
     if (!registers.flags.zero)
-    {
-        registers.pc += offset - 1;
+    {   
+        registers.pc += offset + 1; // because this instruction takes 2 bytes
         return 12;
     }
     registers.pc += 1;
@@ -100,7 +100,7 @@ NUM_CYCLES CPU::opcode0x28()
     int8_t offset = memory->readByte(registers.pc + 1);
     if (registers.flags.zero)
     {
-        registers.pc += offset - 1;
+        registers.pc += offset + 1;
         return 12;
     }
     registers.pc += 1;
@@ -112,7 +112,7 @@ NUM_CYCLES CPU::opcode0x30()
     int8_t offset = memory->readByte(registers.pc + 1);
     if (!registers.flags.carry)
     {
-        registers.pc += offset - 1;
+        registers.pc += offset + 1;
         return 12;
     }
     registers.pc += 1;
@@ -124,7 +124,7 @@ NUM_CYCLES CPU::opcode0x38()
     int8_t offset = memory->readByte(registers.pc + 1);
     if (registers.flags.carry)
     {
-        registers.pc += offset - 1;
+        registers.pc += offset + 1;
         return 12;
     }
     registers.pc += 1;
@@ -137,7 +137,7 @@ NUM_CYCLES CPU::opcode0xCD()
     uint16_t address = load16BitFromPC();
 
     push(registers.pc + 3);
-    registers.pc = address - 1;
+    registers.pc = address - 2;
     return 24;
 } // CALL ADDRESS
 
@@ -243,6 +243,13 @@ NUM_CYCLES CPU::opcode0xD8()
     }
     return 8;
 } // RETURN IF CARRY
+
+NUM_CYCLES CPU::opcode0xD9()
+{
+    registers.pc = pop() - 1;
+    registers.ime = true;
+    return 16;
+} // RETURN AND ENABLE INTERRUPTS
 
 // RESTART INSTRUCTIONS
 NUM_CYCLES CPU::opcode0xC7()

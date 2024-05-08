@@ -28,9 +28,9 @@ Cartridge::Cartridge(std::string romFile) {
 
 void Cartridge::parseAndCheckHeader() {
     std::cout << "Parsing cartridge header..." << std::endl;
-    if (rom[0x104] != 0xCE) {
-        throw std::runtime_error("Invalid ROM: Nintendo logo not found");
-    }
+    // if (rom[0x104] != 0xCE) {
+    //     throw std::runtime_error("Invalid ROM: Nintendo logo not found");
+    // }
     this->title = std::string(rom.begin() + 0x134, rom.begin() + 0x143);
     this->type = rom[0x147];
     this->romSize = rom[0x148];

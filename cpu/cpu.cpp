@@ -5,7 +5,6 @@
 CPU::CPU(Memory *memory) : memory(memory)
 {
     reset();
-    registers.reset();
     setupOpcodes();
 }
 
@@ -22,7 +21,7 @@ void CPU::requestInterrupt(uint8_t interrupt)
 
 void CPU::serviceInterrupt(uint8_t interrupt)
 {
-    masterInterruptEnable = false;
+    registers.ime = false;
     uint8_t interruptFlag = memory->readByte(0xFF0F);
     interruptFlag = clearBit(interruptFlag, interrupt);
     memory->writeByte(0xFF0F, interruptFlag);
@@ -52,7 +51,7 @@ void CPU::serviceInterrupt(uint8_t interrupt)
 
 void CPU::handleInterrupts()
 {
-    if(!masterInterruptEnable) return;
+    if(!registers.ime) return;
     uint8_t interruptFlag = memory->readByte(0xFF0F);
     uint8_t interruptEnable = memory->readByte(0xFFFF);
 
@@ -358,7 +357,7 @@ void CPU::setupOpcodes()
     opcodes[0xC8] = &CPU::opcode0xC8;
     opcodes[0xD0] = &CPU::opcode0xD0;
     opcodes[0xD8] = &CPU::opcode0xD8;
-    // opcodes[0xD9] = &CPU::opcode0xD9; NOT IMPLEMENTED YET
+    opcodes[0xD9] = &CPU::opcode0xD9;
     opcodes[0xC7] = &CPU::opcode0xC7;
     opcodes[0xCF] = &CPU::opcode0xCF;
     opcodes[0xD7] = &CPU::opcode0xD7;
@@ -366,6 +365,9 @@ void CPU::setupOpcodes()
     opcodes[0xEF] = &CPU::opcode0xEF;
     opcodes[0xF7] = &CPU::opcode0xF7;
     opcodes[0xFF] = &CPU::opcode0xFF;
+
+    // EXTENDED OPCODES
+    opcodes[0xCB] = &CPU::opcode0xCB;
 }
 
 // stack operations

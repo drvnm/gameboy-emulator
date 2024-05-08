@@ -1,5 +1,6 @@
 #include "../cpu.h"
 #include "../../common/defs.h"
+#include <iostream>
 
 void CPU::add8bit(REGISTER *reg, uint8_t value)
 {
@@ -649,6 +650,7 @@ NUM_CYCLES CPU::opcode0xBE()
 NUM_CYCLES CPU::opcode0xFE()
 {
     registers.pc += 1;
+    std::cout << "A: " << (int)registers.a << " N: " << (int)memory->readByte(registers.pc) << std::endl;
     cp8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // CP A n
@@ -698,7 +700,9 @@ NUM_CYCLES CPU::opcode0x14()
 
 NUM_CYCLES CPU::opcode0x1C()
 {
+    std::cout << "E WAS: " << (int)registers.e << std::endl;
     inc8bit(&registers.e);
+    std::cout << "E IS: " << (int)registers.e << std::endl;
     return 4;
 } // INC E
 

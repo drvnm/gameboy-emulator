@@ -1,10 +1,11 @@
 #include "memory.h"
 #include <iostream>
 
-Memory::Memory(Cartridge* cartridge)
+Memory::Memory(Cartridge *cartridge)
 {
     reset();
     romSize = cartridge->rom.size();
+    std::cout << "rom size: " << romSize << std::endl;
     for (size_t i = 0; i < cartridge->rom.size(); i++)
     {
         map[i] = cartridge->rom[i];
@@ -56,10 +57,30 @@ void Memory::writeByte(uint16_t address, uint8_t value)
 {
     if (address == 0xFF46) // DMA Transfer
     {
+        map[address] = value;
         for (int i = 0; i < 0xA0; i++)
         {
             map[0xFE00 + i] = map[(value << 8) + i];
         }
     }
-    map[address] = value;
+    else if(address == 0xFF44) // LY
+    {
+        std::cout << "LY: " << (int)value << std::endl;
+        map[address] = 0;
+    }
+    else
+    {
+
+        map[address] = value;
+    }
+
+    // if (address == 0xFF02)
+    // {
+    //     throw std::runtime_error("Serial I/O not implemented");
+    // }
+    // else if (address == 0xff01)
+    // {
+    //     throw std::runtime_error("Serial I/O not implemented");
+    // }
 }
+// }

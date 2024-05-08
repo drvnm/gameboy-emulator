@@ -1,0 +1,31 @@
+EXPLAINS TO MYSELF HOW DRAWING SCANLINE WORKS ON GB EMULATOR
+
+
+When the screen is active, a status check of the LCDC register can confirm this. 
+The PPU begins drawing the screen from the top-left corner and processes 
+it line by line from top to bottom.
+
+Here’s how the PPU operates during the rendering:
+
+For scanlines ranging from 0 to 143, the PPU renders both the background and 
+the window layers.
+For scanlines between 144 and 153, the PPU enters the VBlank period. 
+During this period, it triggers the VBlank interrupt.
+The PPU also monitors the STAT register to determine if it needs to trigger any
+ STAT interrupts.
+
+The PPU sets different modes based on the scanline and other conditions:
+
+If the current scanline is 144 or higher, the PPU sets the STAT mode to 1, 
+indicating VBlank.
+If the cycle counter is 376 or more, the PPU switches to STAT mode 2, which is
+ the OAM access period.
+If the cycle counter is at least 204, the PPU sets the STAT mode to 3, which is
+ the period for drawing graphics.
+If the cycle counter is less than 204, the PPU sets the STAT mode to 0, marking
+ the HBlank period.
+These modes transition from 2 (OAM access), to 3 (drawing), to 0 (HBlank), and 
+continue in this sequence until VBlank is reached, at which point it remains in mode 1.
+
+Whenever the mode changes and the corresponding STAT interrupt is enabled, the
+PPU will trigger the relevant STAT interrupt.

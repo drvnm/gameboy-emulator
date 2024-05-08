@@ -1,4 +1,4 @@
-g++ main.cpp `
+g++ main.cpp -O3 `
 memory/memory.cpp `
 cartridge/cartridge.cpp `
 common/defs.cpp `
@@ -12,4 +12,4 @@ display/display.cpp `
 emulator/emulator.cpp `
 -I"../SDL2/i686-w64-mingw32/include" `
 -L"../SDL2/i686-w64-mingw32/lib" -Wall -lmingw32 `
--lSDL2main -lSDL2 ; ./a.exe ../test_roms/tetris.gb
+-lSDL2main -lSDL2 ; ./a.exe '..\test_roms\DMG_ROM.bin'

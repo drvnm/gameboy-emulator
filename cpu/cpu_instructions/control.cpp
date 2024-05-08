@@ -39,7 +39,7 @@ NUM_CYCLES CPU::opcode0xF3()
 {
     registers.ime = false;
     return 1;
-} // DI
+} // DI (Disable interrupts)
 
 NUM_CYCLES CPU::opcode0xFB()
 {

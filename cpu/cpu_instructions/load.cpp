@@ -1,5 +1,6 @@
 #include "../cpu.h"
 #include "../../common/defs.h"
+#include <iostream>
 
 void CPU::load8bit(REGISTER *reg, uint8_t value)
 {
@@ -468,6 +469,7 @@ NUM_CYCLES CPU::opcode0x02()
 
 NUM_CYCLES CPU::opcode0x12()
 {
+    // print the value of registers.de
     memory->writeByte(registers.de, registers.a);
     return 8;
 } // LD (DE), A
