@@ -650,7 +650,6 @@ NUM_CYCLES CPU::opcode0xBE()
 NUM_CYCLES CPU::opcode0xFE()
 {
     registers.pc += 1;
-    std::cout << "A: " << (int)registers.a << " N: " << (int)memory->readByte(registers.pc) << std::endl;
     cp8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // CP A n
@@ -700,9 +699,7 @@ NUM_CYCLES CPU::opcode0x14()
 
 NUM_CYCLES CPU::opcode0x1C()
 {
-    std::cout << "E WAS: " << (int)registers.e << std::endl;
     inc8bit(&registers.e);
-    std::cout << "E IS: " << (int)registers.e << std::endl;
     return 4;
 } // INC E
 
@@ -725,6 +722,35 @@ NUM_CYCLES CPU::opcode0x34()
     memory->writeByte(registers.hl, value);
     return 12;
 } // INC (HL)
+
+void CPU::inc16bit(REGISTER16 *reg)
+{
+    *reg += 1;
+}
+
+NUM_CYCLES CPU::opcode0x03()
+{
+    inc16bit(&registers.bc);
+    return 8;
+} // INC BC
+
+NUM_CYCLES CPU::opcode0x13()
+{
+    inc16bit(&registers.de);
+    return 8;
+} // INC DE
+
+NUM_CYCLES CPU::opcode0x23()
+{
+    inc16bit(&registers.hl);
+    return 8;
+} // INC HL
+
+NUM_CYCLES CPU::opcode0x33()
+{
+    inc16bit(&registers.sp);
+    return 8;
+} // INC SP
 
 // DEC INSTRUCTIONS
 void CPU::dec8bit(REGISTER *reg)
@@ -794,6 +820,36 @@ NUM_CYCLES CPU::opcode0x35()
     memory->writeByte(registers.hl, value);
     return 12;
 } // DEC (HL)
+
+void CPU::dec16bit(REGISTER16 *reg)
+{
+    *reg -= 1;
+}
+
+NUM_CYCLES CPU::opcode0x0B()
+{
+    dec16bit(&registers.bc);
+    return 8;
+} // DEC BC
+
+NUM_CYCLES CPU::opcode0x1B()
+{
+    dec16bit(&registers.de);
+    return 8;
+} // DEC DE
+
+NUM_CYCLES CPU::opcode0x2B()
+{
+    dec16bit(&registers.hl);
+    return 8;
+} // DEC HL
+
+NUM_CYCLES CPU::opcode0x3B()
+{
+    dec16bit(&registers.sp);
+    return 8;
+} // DEC SP
+
 
 // DAA INSTRUCTIONS
 NUM_CYCLES CPU::opcode0x27()

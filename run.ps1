@@ -5,9 +5,11 @@ common/defs.cpp `
 cpu/cpu.cpp `
 cpu/registers.cpp `
 cpu/cpu_instructions/alu.cpp `
-cpu/cpu_instructions/load.cpp `
 cpu/cpu_instructions/branching.cpp `
 cpu/cpu_instructions/control.cpp `
+cpu/cpu_instructions/load.cpp `
+cpu/cpu_instructions/singlebit.cpp `
+cpu/cpu_instructions/rotate.cpp `
 display/display.cpp `
 emulator/emulator.cpp `
 -I"../SDL2/i686-w64-mingw32/include" `

@@ -137,7 +137,7 @@ NUM_CYCLES CPU::opcode0xCD()
     uint16_t address = load16BitFromPC();
 
     push(registers.pc + 3);
-    registers.pc = address - 2;
+    registers.pc = address - 1;
     return 24;
 } // CALL ADDRESS
 

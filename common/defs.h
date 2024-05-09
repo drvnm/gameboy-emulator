@@ -47,6 +47,7 @@ struct opcodeInfo
 
 #define NUM_OPCODES 256
 extern opcodeInfo opcodeDescriptionTable[NUM_OPCODES];
+extern opcodeInfo extendedOpcodeDescriptionTable[NUM_OPCODES];
 struct RGB {
     uint8_t red;
     uint8_t green;
@@ -62,3 +63,4 @@ struct RGB {
 bool bitIsSet(uint8_t byte, int position);
 uint8_t setBit(uint8_t byte, int position);
 uint8_t clearBit(uint8_t byte, int position);
+uint8_t getBit(uint8_t byte, int position);

@@ -65,7 +65,6 @@ void Memory::writeByte(uint16_t address, uint8_t value)
     }
     else if(address == 0xFF44) // LY
     {
-        std::cout << "LY: " << (int)value << std::endl;
         map[address] = 0;
     }
     else

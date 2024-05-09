@@ -29,3 +29,6 @@ continue in this sequence until VBlank is reached, at which point it remains in 
 
 Whenever the mode changes and the corresponding STAT interrupt is enabled, the
 PPU will trigger the relevant STAT interrupt.
+
+the actual tile data is stored in vram from address 0x8000 to 0x97FF (that is a total of 6144 bytes or 384 tiles).
+there are 3 blocks of 128 tiles each, each block is 16x16 tiles, each tile is 8x8 pixels.
