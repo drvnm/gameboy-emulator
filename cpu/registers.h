@@ -11,7 +11,6 @@ struct Registers
     {
         struct
         {
-            // not a low flag according to documentation
             uint8_t f; 
             uint8_t a; // high byte
         };

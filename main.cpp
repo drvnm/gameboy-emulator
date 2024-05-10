@@ -8,6 +8,7 @@
 #include "display/display.h"
 #include "cpu/cpu.h"
 #include "memory/memory.h"
+#include "debugger/debugger.h"
 
 
 int main(int argc, char *argv[])
@@ -19,12 +20,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    Cartridge* cartridge = new Cartridge(argv[1]);
-    Memory* memory = new Memory(cartridge);
-    CPU* cpu = new CPU(memory);
-    Display* display = new Display(memory, cpu);
-    
-    Emulator emulator(cpu, display, memory, cartridge);
+    Debugger* debugger = new Debugger();
+    Cartridge* cartridge = new Cartridge(argv[1], debugger);
+    Memory* memory = new Memory(cartridge, debugger);
+    CPU* cpu = new CPU(memory, debugger);
+    Display* display = new Display(memory, cpu, debugger);
+    Emulator emulator(cpu, display, memory, cartridge, debugger);
     emulator.run();
 
 

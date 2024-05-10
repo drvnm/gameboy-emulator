@@ -2,8 +2,10 @@
 
 #include "cpu.h"
 
-CPU::CPU(Memory *memory) : memory(memory)
+CPU::CPU(Memory *memory, Debugger *debugger)
 {
+    this->memory = memory;
+    this->debugger = debugger;
     reset();
     setupOpcodes();
 }
@@ -51,21 +53,24 @@ void CPU::serviceInterrupt(uint8_t interrupt)
 
 void CPU::handleInterrupts()
 {
-    if(!registers.ime) return;
+    if (!registers.ime)
+        return;
     uint8_t interruptFlag = memory->readByte(0xFF0F);
     uint8_t interruptEnable = memory->readByte(0xFFFF);
 
-    if(interruptFlag == 0) return;
+    if (interruptFlag == 0)
+        return;
     for (int i = 0; i < 5; i++)
     {
-       if(bitIsSet(interruptFlag, i)) {
-        if(bitIsSet(interruptEnable, i)) {
-            std::cout << "Servicing interrupt: " << i << std::endl;
-           serviceInterrupt(i);
+        if (bitIsSet(interruptFlag, i))
+        {
+            if (bitIsSet(interruptEnable, i))
+            {
+                std::cout << "Servicing interrupt: " << i << std::endl;
+                serviceInterrupt(i);
+            }
         }
-       }
     }
-    
 }
 
 uint8_t CPU::step()
@@ -84,17 +89,16 @@ uint8_t CPU::executeInstruction(OPCODE opcode)
         if (extendedOpcodes[extendedOpcode] != nullptr)
         {
             // read instruction from opcode table
-            std::cout << "Executing extended opcode: " << std::hex << (int)extendedOpcode << " at address: " << std::hex << registers.pc << " Instruction: " << extendedOpcodeDescriptionTable[extendedOpcode].name << std::endl;
+            if(debugger->doPrint) std::cout << "Executing extended opcode: " << std::hex << (int)extendedOpcode << " at address: " << std::hex << registers.pc << " Instruction: " << extendedOpcodeDescriptionTable[extendedOpcode].name << std::endl;
             short cycles = (this->*extendedOpcodes[extendedOpcode])();
             registers.pc += 1; // to account for the extended opcode
             return cycles;
         }
         else
         {
-            // std::cout << "Extended opcode " << std::hex << (int)extendedOpcode << " not implemented" << std::endl;
+             if(debugger->doPrint) std::cout << "Extended opcode " << std::hex << (int)extendedOpcode << " not implemented at address: " << std::hex << registers.pc << std::endl;
             throw std::runtime_error("Extended opcode not implemented");
         }
-        
     }
     if (opcodes[opcode] != nullptr)
     {
@@ -102,23 +106,23 @@ uint8_t CPU::executeInstruction(OPCODE opcode)
         if (opcodeDescriptionTable[opcode].size == 1)
         {
             firstByte = memory->map[registers.pc + 1];
-            std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << std::endl;
+             if(debugger->doPrint) std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << std::endl;
         }
         else if (opcodeDescriptionTable[opcode].size == 2)
         {
             firstByte = memory->map[registers.pc + 1];
             secondByte = memory->map[registers.pc + 2];
-            std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << " " << std::hex << (int)secondByte << std::endl;
+            if(debugger->doPrint)  std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << " " << std::hex << (int)secondByte << std::endl;
         }
         else
         {
-            std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << std::endl;
+            if(debugger->doPrint)  std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << std::endl;
         }
         return (this->*opcodes[opcode])();
     }
     else
     {
-        std::cout << "Opcode " << std::hex << (int)opcode << " not implemented" << std::endl;
+        std::cout << "Opcode " << std::hex << (int)opcode << " not implemented at address: " << std::hex << registers.pc << std::endl;
         throw std::runtime_error("Opcode not implemented");
     }
 }
@@ -218,6 +222,8 @@ void CPU::setupOpcodes()
     opcodes[0x21] = &CPU::opcode0x21;
     opcodes[0x31] = &CPU::opcode0x31;
     opcodes[0xF9] = &CPU::opcode0xF9;
+    opcodes[0xF8] = &CPU::opcode0xF8;
+    opcodes[0x08] = &CPU::opcode0x08;
 
     // PUSH AND POP INSTRUCTIONS
     opcodes[0xF5] = &CPU::opcode0xF5;
@@ -239,6 +245,12 @@ void CPU::setupOpcodes()
     opcodes[0x85] = &CPU::opcode0x85;
     opcodes[0x86] = &CPU::opcode0x86;
     opcodes[0xC6] = &CPU::opcode0xC6;
+
+    // ADD 16-BIT INSTRUCTIONS
+    opcodes[0x09] = &CPU::opcode0x09;
+    opcodes[0x19] = &CPU::opcode0x19;
+    opcodes[0x29] = &CPU::opcode0x29;
+    opcodes[0x39] = &CPU::opcode0x39;
 
     // ADC INSTRUCTIONS
     opcodes[0x8F] = &CPU::opcode0x8F;
@@ -332,7 +344,7 @@ void CPU::setupOpcodes()
     opcodes[0x13] = &CPU::opcode0x13;
     opcodes[0x23] = &CPU::opcode0x23;
     opcodes[0x33] = &CPU::opcode0x33;
-    
+
     // DEC INSTRUCTIONS
     opcodes[0x3D] = &CPU::opcode0x3D;
     opcodes[0x05] = &CPU::opcode0x05;
@@ -348,7 +360,7 @@ void CPU::setupOpcodes()
     opcodes[0x1B] = &CPU::opcode0x1B;
     opcodes[0x2B] = &CPU::opcode0x2B;
     opcodes[0x3B] = &CPU::opcode0x3B;
-    
+
     // CONTROL INSTRUCTIONS
     opcodes[0x3F] = &CPU::opcode0x3F;
     opcodes[0x37] = &CPU::opcode0x37;
@@ -373,6 +385,7 @@ void CPU::setupOpcodes()
     opcodes[0x28] = &CPU::opcode0x28;
     opcodes[0x30] = &CPU::opcode0x30;
     opcodes[0x38] = &CPU::opcode0x38;
+    opcodes[0xE9] = &CPU::opcode0xE9;
 
     // CALL INSTRUCTIONS
     opcodes[0xCD] = &CPU::opcode0xCD;
@@ -407,11 +420,11 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x01] = &CPU::extendedOpcode0x01; // RLC C
     extendedOpcodes[0x02] = &CPU::extendedOpcode0x02; // RLC D
     extendedOpcodes[0x03] = &CPU::extendedOpcode0x03; // RLC E
-    extendedOpcodes[0x04] = &CPU::extendedOpcode0x04; // RLC H 
+    extendedOpcodes[0x04] = &CPU::extendedOpcode0x04; // RLC H
     extendedOpcodes[0x05] = &CPU::extendedOpcode0x05; // RLC L
     extendedOpcodes[0x06] = &CPU::extendedOpcode0x06; // RLC (HL)
     extendedOpcodes[0x07] = &CPU::extendedOpcode0x07; // RLC A
-    
+
     extendedOpcodes[0x08] = &CPU::extendedOpcode0x08; // RRC B
     extendedOpcodes[0x09] = &CPU::extendedOpcode0x09; // RRC C
     extendedOpcodes[0x0A] = &CPU::extendedOpcode0x0A; // RRC D
@@ -420,7 +433,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x0D] = &CPU::extendedOpcode0x0D; // RRC L
     extendedOpcodes[0x0E] = &CPU::extendedOpcode0x0E; // RRC (HL)
     extendedOpcodes[0x0F] = &CPU::extendedOpcode0x0F; // RRC A
-    
+
     extendedOpcodes[0x10] = &CPU::extendedOpcode0x10; // rl B
     extendedOpcodes[0x11] = &CPU::extendedOpcode0x11; // rl C
     extendedOpcodes[0x12] = &CPU::extendedOpcode0x12; // rl D
@@ -429,7 +442,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x15] = &CPU::extendedOpcode0x15; // rl L
     extendedOpcodes[0x16] = &CPU::extendedOpcode0x16; // rl (HL)
     extendedOpcodes[0x17] = &CPU::extendedOpcode0x17; // rl A
-    
+
     extendedOpcodes[0x18] = &CPU::extendedOpcode0x18; // rr B
     extendedOpcodes[0x19] = &CPU::extendedOpcode0x19; // rr C
     extendedOpcodes[0x1A] = &CPU::extendedOpcode0x1A; // rr D
@@ -438,7 +451,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x1D] = &CPU::extendedOpcode0x1D; // rr L
     extendedOpcodes[0x1E] = &CPU::extendedOpcode0x1E; // rr (HL)
     extendedOpcodes[0x1F] = &CPU::extendedOpcode0x1F; // rr A
-    
+
     extendedOpcodes[0x20] = &CPU::extendedOpcode0x20; // sla B
     extendedOpcodes[0x21] = &CPU::extendedOpcode0x21; // sla C
     extendedOpcodes[0x22] = &CPU::extendedOpcode0x22; // sla D
@@ -447,7 +460,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x25] = &CPU::extendedOpcode0x25; // sla L
     extendedOpcodes[0x26] = &CPU::extendedOpcode0x26; // sla (HL)
     extendedOpcodes[0x27] = &CPU::extendedOpcode0x27; // sla A
-    
+
     extendedOpcodes[0x28] = &CPU::extendedOpcode0x28; // sra B
     extendedOpcodes[0x29] = &CPU::extendedOpcode0x29; // sra C
     extendedOpcodes[0x2A] = &CPU::extendedOpcode0x2A; // sra D
@@ -456,7 +469,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x2D] = &CPU::extendedOpcode0x2D; // sra L
     extendedOpcodes[0x2E] = &CPU::extendedOpcode0x2E; // sra (HL)
     extendedOpcodes[0x2F] = &CPU::extendedOpcode0x2F; // sra A
-    
+
     extendedOpcodes[0x30] = &CPU::extendedOpcode0x30; // swap B
     extendedOpcodes[0x31] = &CPU::extendedOpcode0x31; // swap C
     extendedOpcodes[0x32] = &CPU::extendedOpcode0x32; // swap D
@@ -465,7 +478,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x35] = &CPU::extendedOpcode0x35; // swap L
     extendedOpcodes[0x36] = &CPU::extendedOpcode0x36; // swap (HL)
     extendedOpcodes[0x37] = &CPU::extendedOpcode0x37; // swap A
-    
+
     extendedOpcodes[0x38] = &CPU::extendedOpcode0x38; // SRL B
     extendedOpcodes[0x39] = &CPU::extendedOpcode0x39; // SRL C
     extendedOpcodes[0x3A] = &CPU::extendedOpcode0x3A; // SRL D
@@ -483,7 +496,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x45] = &CPU::extendedOpcode0x45; // bit 0, L
     extendedOpcodes[0x46] = &CPU::extendedOpcode0x46; // bit 0, (HL)
     extendedOpcodes[0x47] = &CPU::extendedOpcode0x47; // bit 0, A
-    
+
     extendedOpcodes[0x48] = &CPU::extendedOpcode0x48; // bit 1, B
     extendedOpcodes[0x49] = &CPU::extendedOpcode0x49; // bit 1, C
     extendedOpcodes[0x4A] = &CPU::extendedOpcode0x4A; // bit 1, D
@@ -492,7 +505,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x4D] = &CPU::extendedOpcode0x4D; // bit 1, L
     extendedOpcodes[0x4E] = &CPU::extendedOpcode0x4E; // bit 1, (HL)
     extendedOpcodes[0x4F] = &CPU::extendedOpcode0x4F; // bit 1, A
-    
+
     extendedOpcodes[0x50] = &CPU::extendedOpcode0x50; // bit 2, B
     extendedOpcodes[0x51] = &CPU::extendedOpcode0x51; // bit 2, C
     extendedOpcodes[0x52] = &CPU::extendedOpcode0x52; // bit 2, D
@@ -501,7 +514,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x55] = &CPU::extendedOpcode0x55; // bit 2, L
     extendedOpcodes[0x56] = &CPU::extendedOpcode0x56; // bit 2, (HL)
     extendedOpcodes[0x57] = &CPU::extendedOpcode0x57; // bit 2, A
-    
+
     extendedOpcodes[0x58] = &CPU::extendedOpcode0x58; // bit 3, B
     extendedOpcodes[0x59] = &CPU::extendedOpcode0x59; // bit 3, C
     extendedOpcodes[0x5A] = &CPU::extendedOpcode0x5A; // bit 3, D
@@ -510,7 +523,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x5D] = &CPU::extendedOpcode0x5D; // bit 3, L
     extendedOpcodes[0x5E] = &CPU::extendedOpcode0x5E; // bit 3, (HL)
     extendedOpcodes[0x5F] = &CPU::extendedOpcode0x5F; // bit 3, A
-    
+
     extendedOpcodes[0x60] = &CPU::extendedOpcode0x60; // bit 4, B
     extendedOpcodes[0x61] = &CPU::extendedOpcode0x61; // bit 4, C
     extendedOpcodes[0x62] = &CPU::extendedOpcode0x62; // bit 4, D
@@ -519,7 +532,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x65] = &CPU::extendedOpcode0x65; // bit 4, L
     extendedOpcodes[0x66] = &CPU::extendedOpcode0x66; // bit 4, (HL)
     extendedOpcodes[0x67] = &CPU::extendedOpcode0x67; // bit 4, A
-    
+
     extendedOpcodes[0x68] = &CPU::extendedOpcode0x68; // bit 5, B
     extendedOpcodes[0x69] = &CPU::extendedOpcode0x69; // bit 5, C
     extendedOpcodes[0x6A] = &CPU::extendedOpcode0x6A; // bit 5, D
@@ -528,7 +541,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x6D] = &CPU::extendedOpcode0x6D; // bit 5, L
     extendedOpcodes[0x6E] = &CPU::extendedOpcode0x6E; // bit 5, (HL)
     extendedOpcodes[0x6F] = &CPU::extendedOpcode0x6F; // bit 5, A
-    
+
     extendedOpcodes[0x70] = &CPU::extendedOpcode0x70; // bit 6, B
     extendedOpcodes[0x71] = &CPU::extendedOpcode0x71; // bit 6, C
     extendedOpcodes[0x72] = &CPU::extendedOpcode0x72; // bit 6, D
@@ -537,7 +550,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x75] = &CPU::extendedOpcode0x75; // bit 6, L
     extendedOpcodes[0x76] = &CPU::extendedOpcode0x76; // bit 6, (HL)
     extendedOpcodes[0x77] = &CPU::extendedOpcode0x77; // bit 6, A
-    
+
     extendedOpcodes[0x78] = &CPU::extendedOpcode0x78; // bit 7, B
     extendedOpcodes[0x79] = &CPU::extendedOpcode0x79; // bit 7, C
     extendedOpcodes[0x7A] = &CPU::extendedOpcode0x7A; // bit 7, D
@@ -546,7 +559,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x7D] = &CPU::extendedOpcode0x7D; // bit 7, L
     extendedOpcodes[0x7E] = &CPU::extendedOpcode0x7E; // bit 7, (HL)
     extendedOpcodes[0x7F] = &CPU::extendedOpcode0x7F; // bit 7, A
-    
+
     extendedOpcodes[0x80] = &CPU::extendedOpcode0x80; // res 0, B
     extendedOpcodes[0x81] = &CPU::extendedOpcode0x81; // res 0, C
     extendedOpcodes[0x82] = &CPU::extendedOpcode0x82; // res 0, D
@@ -555,7 +568,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x85] = &CPU::extendedOpcode0x85; // res 0, L
     extendedOpcodes[0x86] = &CPU::extendedOpcode0x86; // res 0, (HL)
     extendedOpcodes[0x87] = &CPU::extendedOpcode0x87; // res 0, A
-    
+
     extendedOpcodes[0x88] = &CPU::extendedOpcode0x88; // res 1, B
     extendedOpcodes[0x89] = &CPU::extendedOpcode0x89; // res 1, C
     extendedOpcodes[0x8A] = &CPU::extendedOpcode0x8A; // res 1, D
@@ -564,7 +577,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x8D] = &CPU::extendedOpcode0x8D; // res 1, L
     extendedOpcodes[0x8E] = &CPU::extendedOpcode0x8E; // res 1, (HL)
     extendedOpcodes[0x8F] = &CPU::extendedOpcode0x8F; // res 1, A
-    
+
     extendedOpcodes[0x90] = &CPU::extendedOpcode0x90; // res 2, B
     extendedOpcodes[0x91] = &CPU::extendedOpcode0x91; // res 2, C
     extendedOpcodes[0x92] = &CPU::extendedOpcode0x92; // res 2, D
@@ -573,7 +586,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x95] = &CPU::extendedOpcode0x95; // res 2, L
     extendedOpcodes[0x96] = &CPU::extendedOpcode0x96; // res 2, (HL)
     extendedOpcodes[0x97] = &CPU::extendedOpcode0x97; // res 2, A
-    
+
     extendedOpcodes[0x98] = &CPU::extendedOpcode0x98; // res 3, B
     extendedOpcodes[0x99] = &CPU::extendedOpcode0x99; // res 3, C
     extendedOpcodes[0x9A] = &CPU::extendedOpcode0x9A; // res 3, D
@@ -582,7 +595,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0x9D] = &CPU::extendedOpcode0x9D; // res 3, L
     extendedOpcodes[0x9E] = &CPU::extendedOpcode0x9E; // res 3, (HL)
     extendedOpcodes[0x9F] = &CPU::extendedOpcode0x9F; // res 3, A
-    
+
     extendedOpcodes[0xA0] = &CPU::extendedOpcode0xA0; // res 4, B
     extendedOpcodes[0xA1] = &CPU::extendedOpcode0xA1; // res 4, C
     extendedOpcodes[0xA2] = &CPU::extendedOpcode0xA2; // res 4, D
@@ -591,7 +604,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xA5] = &CPU::extendedOpcode0xA5; // res 4, L
     extendedOpcodes[0xA6] = &CPU::extendedOpcode0xA6; // res 4, (HL)
     extendedOpcodes[0xA7] = &CPU::extendedOpcode0xA7; // res 4, A
-    
+
     extendedOpcodes[0xA8] = &CPU::extendedOpcode0xA8; // res 5, B
     extendedOpcodes[0xA9] = &CPU::extendedOpcode0xA9; // res 5, C
     extendedOpcodes[0xAA] = &CPU::extendedOpcode0xAA; // res 5, D
@@ -600,7 +613,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xAD] = &CPU::extendedOpcode0xAD; // res 5, L
     extendedOpcodes[0xAE] = &CPU::extendedOpcode0xAE; // res 5, (HL)
     extendedOpcodes[0xAF] = &CPU::extendedOpcode0xAF; // res 5, A
-    
+
     extendedOpcodes[0xB0] = &CPU::extendedOpcode0xB0; // res 6, B
     extendedOpcodes[0xB1] = &CPU::extendedOpcode0xB1; // res 6, C
     extendedOpcodes[0xB2] = &CPU::extendedOpcode0xB2; // res 6, D
@@ -609,7 +622,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xB5] = &CPU::extendedOpcode0xB5; // res 6, L
     extendedOpcodes[0xB6] = &CPU::extendedOpcode0xB6; // res 6, (HL)
     extendedOpcodes[0xB7] = &CPU::extendedOpcode0xB7; // res 6, A
-    
+
     extendedOpcodes[0xB8] = &CPU::extendedOpcode0xB8; // res 7, B
     extendedOpcodes[0xB9] = &CPU::extendedOpcode0xB9; // res 7, C
     extendedOpcodes[0xBA] = &CPU::extendedOpcode0xBA; // res 7, D
@@ -618,7 +631,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xBD] = &CPU::extendedOpcode0xBD; // res 7, L
     extendedOpcodes[0xBE] = &CPU::extendedOpcode0xBE; // res 7, (HL)
     extendedOpcodes[0xBF] = &CPU::extendedOpcode0xBF; // res 7, A
-    
+
     extendedOpcodes[0xC0] = &CPU::extendedOpcode0xC0; // set 0, B
     extendedOpcodes[0xC1] = &CPU::extendedOpcode0xC1; // set 0, C
     extendedOpcodes[0xC2] = &CPU::extendedOpcode0xC2; // set 0, D
@@ -627,7 +640,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xC5] = &CPU::extendedOpcode0xC5; // set 0, L
     extendedOpcodes[0xC6] = &CPU::extendedOpcode0xC6; // set 0, (HL)
     extendedOpcodes[0xC7] = &CPU::extendedOpcode0xC7; // set 0, A
-    
+
     extendedOpcodes[0xC8] = &CPU::extendedOpcode0xC8; // set 1, B
     extendedOpcodes[0xC9] = &CPU::extendedOpcode0xC9; // set 1, C
     extendedOpcodes[0xCA] = &CPU::extendedOpcode0xCA; // set 1, D
@@ -636,7 +649,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xCD] = &CPU::extendedOpcode0xCD; // set 1, L
     extendedOpcodes[0xCE] = &CPU::extendedOpcode0xCE; // set 1, (HL)
     extendedOpcodes[0xCF] = &CPU::extendedOpcode0xCF; // set 1, A
-    
+
     extendedOpcodes[0xD0] = &CPU::extendedOpcode0xD0; // set 2, B
     extendedOpcodes[0xD1] = &CPU::extendedOpcode0xD1; // set 2, C
     extendedOpcodes[0xD2] = &CPU::extendedOpcode0xD2; // set 2, D
@@ -645,7 +658,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xD5] = &CPU::extendedOpcode0xD5; // set 2, L
     extendedOpcodes[0xD6] = &CPU::extendedOpcode0xD6; // set 2, (HL)
     extendedOpcodes[0xD7] = &CPU::extendedOpcode0xD7; // set 2, A
-    
+
     extendedOpcodes[0xD8] = &CPU::extendedOpcode0xD8; // set 3, B
     extendedOpcodes[0xD9] = &CPU::extendedOpcode0xD9; // set 3, C
     extendedOpcodes[0xDA] = &CPU::extendedOpcode0xDA; // set 3, D
@@ -654,7 +667,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xDD] = &CPU::extendedOpcode0xDD; // set 3, L
     extendedOpcodes[0xDE] = &CPU::extendedOpcode0xDE; // set 3, (HL)
     extendedOpcodes[0xDF] = &CPU::extendedOpcode0xDF; // set 3, A
-    
+
     extendedOpcodes[0xE0] = &CPU::extendedOpcode0xE0; // set 4, B
     extendedOpcodes[0xE1] = &CPU::extendedOpcode0xE1; // set 4, C
     extendedOpcodes[0xE2] = &CPU::extendedOpcode0xE2; // set 4, D
@@ -663,7 +676,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xE5] = &CPU::extendedOpcode0xE5; // set 4, L
     extendedOpcodes[0xE6] = &CPU::extendedOpcode0xE6; // set 4, (HL)
     extendedOpcodes[0xE7] = &CPU::extendedOpcode0xE7; // set 4, A
-    
+
     extendedOpcodes[0xE8] = &CPU::extendedOpcode0xE8; // set 5, B
     extendedOpcodes[0xE9] = &CPU::extendedOpcode0xE9; // set 5, C
     extendedOpcodes[0xEA] = &CPU::extendedOpcode0xEA; // set 5, D
@@ -672,7 +685,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xED] = &CPU::extendedOpcode0xED; // set 5, L
     extendedOpcodes[0xEE] = &CPU::extendedOpcode0xEE; // set 5, (HL)
     extendedOpcodes[0xEF] = &CPU::extendedOpcode0xEF; // set 5, A
-    
+
     extendedOpcodes[0xF0] = &CPU::extendedOpcode0xF0; // set 6, B
     extendedOpcodes[0xF1] = &CPU::extendedOpcode0xF1; // set 6, C
     extendedOpcodes[0xF2] = &CPU::extendedOpcode0xF2; // set 6, D
@@ -681,7 +694,7 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xF5] = &CPU::extendedOpcode0xF5; // set 6, L
     extendedOpcodes[0xF6] = &CPU::extendedOpcode0xF6; // set 6, (HL)
     extendedOpcodes[0xF7] = &CPU::extendedOpcode0xF7; // set 6, A
-    
+
     extendedOpcodes[0xF8] = &CPU::extendedOpcode0xF8; // set 7, B
     extendedOpcodes[0xF9] = &CPU::extendedOpcode0xF9; // set 7, C
     extendedOpcodes[0xFA] = &CPU::extendedOpcode0xFA; // set 7, D
@@ -690,7 +703,6 @@ void CPU::setupOpcodes()
     extendedOpcodes[0xFD] = &CPU::extendedOpcode0xFD; // set 7, L
     extendedOpcodes[0xFE] = &CPU::extendedOpcode0xFE; // set 7, (HL)
     extendedOpcodes[0xFF] = &CPU::extendedOpcode0xFF; // set 7, A
-
 }
 
 // stack operations

@@ -6,12 +6,13 @@ const int MAX_CYCLES = 70224;
 const float FPS = 59.73;
 const float DELAY_TIME = 1000.0f / FPS;
 
-Emulator::Emulator(CPU *cpu, Display *display, Memory *memory, Cartridge *cartridge)
+Emulator::Emulator(CPU *cpu, Display *display, Memory *memory, Cartridge *cartridge, Debugger *debugger)
 {
     this->cpu = cpu;
     this->display = display;
     this->memory = memory;
     this->cartridge = cartridge;
+    this->debugger = debugger;
 }
 
 void Emulator::run()
@@ -22,11 +23,14 @@ void Emulator::run()
 
     while (cpu->registers.pc < 69905)
     {
-        current = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration<float, std::milli>(current - previous);
-        uint8_t cycles = cpu->step();
-        display->update(cycles);
-        cpu->handleInterrupts();
+        if (!debugger->doPause)
+        {
+            current = std::chrono::high_resolution_clock::now();
+            auto elapsed = std::chrono::duration<float, std::milli>(current - previous);
+            uint8_t cycles = cpu->step();
+            display->update(cycles);
+        }
+        // cpu->handleInterrupts();
 
         // if (elapsed.count() < DELAY_TIME)
         // {
@@ -40,15 +44,34 @@ void Emulator::run()
 
         // }
 
-
         SDL_Event e;
-        while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT) {
+        while (SDL_PollEvent(&e) != 0)
+        {
+            if (e.type == SDL_QUIT)
+            {
                 quit = true;
             }
+
+            // if 1 is pressed, turn debug.pause on
+            if (e.type == SDL_KEYDOWN)
+            {
+                if (e.key.keysym.sym == SDLK_1)
+                {
+                    debugger->doPause = !debugger->doPause;
+                }
+            } 
+            if (e.type == SDL_KEYDOWN)
+            {
+                if (e.key.keysym.sym == SDLK_2)
+                {
+                    debugger->doPrint = !debugger->doPrint;
+                }
+            }
         }
-        if (quit) {
+        if (quit)
+        {
             break;
         }
     }
+    std::cout << "PC: " << cpu->registers.pc << std::endl;
 }

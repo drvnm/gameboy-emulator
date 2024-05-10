@@ -5,6 +5,8 @@
 
 #include "registers.h"
 #include "../memory/memory.h"
+#include "../debugger/debugger.h"
+
 
 // emulates the CPU of the gameboy (the sharp LR35902)
 class CPU
@@ -12,6 +14,7 @@ class CPU
 public:
     // display stuff
     Memory *memory;
+    Debugger *debugger;
     short (CPU::*opcodes[0xFF + 1])();         // array of function pointers to the opcodes
     short (CPU::*extendedOpcodes[0xFF + 1])(); // array of function pointers to the cb opcodes
     Registers registers;                       // 8-bit registers
@@ -152,6 +155,15 @@ public:
     NUM_CYCLES opcode0x85(); // ADD A, HL.LOW
     NUM_CYCLES opcode0x86(); // ADD A, (HL)
     NUM_CYCLES opcode0xC6(); // ADD A, NUMBER
+
+    void add16bit(REGISTER16 *reg, uint16_t value);
+    NUM_CYCLES opcode0x09(); // ADD HL, BC
+    NUM_CYCLES opcode0x19(); // ADD HL, DE
+    NUM_CYCLES opcode0x29(); // ADD HL, HL
+    NUM_CYCLES opcode0x39(); // ADD HL, SP
+
+
+
     // ADC INSTRUCTIONS
     void adc8bit(REGISTER *reg, uint8_t value);
     NUM_CYCLES opcode0x8F(); // ADC A, AF.HIGH
@@ -601,6 +613,6 @@ public:
     NUM_CYCLES extendedOpcode0xBD(); // RES 7, HL.LOW
     NUM_CYCLES extendedOpcode0xBE(); // RES 7, (HL)
 
-    CPU(Memory *memory);
+    CPU(Memory *memory, Debugger *debugger);
     uint8_t step();
 };

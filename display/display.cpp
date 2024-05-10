@@ -4,18 +4,31 @@
 RGB Display::CLASSIC_PALLETE[4] = {{155, 188, 15}, {139, 172, 15}, {48, 98, 48}, {15, 56, 15}};
 RGB Display::GREY_PALLETE[4] = {{255, 255, 255}, {0xCC, 0xCC, 0xCC}, {0x77, 0x77, 0x77}, {0x0, 0x0, 0x0}};
 
-Display::Display(Memory *memory, CPU *cpu)
+Display::Display(Memory *memory, CPU *cpu, Debugger *debugger)
 {
     this->memory = memory;
     this->cpu = cpu;
+    this->debugger = debugger;
     SDL_Init(SDL_INIT_EVERYTHING);
     std::cout << "SDL Initialized" << std::endl;
     window = SDL_CreateWindow("Chip8 Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3, SDL_WINDOW_SHOWN);
+    tileWindow = SDL_CreateWindow("Tile Viewer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, TILE_SCREEN_WIDTH * 3, TILE_SCREEN_HEIGHT * 3, SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+    tileRenderer = SDL_CreateRenderer(tileWindow, -1, SDL_RENDERER_ACCELERATED);
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+    SDL_RenderSetLogicalSize(tileRenderer, TILE_SCREEN_WIDTH, TILE_SCREEN_HEIGHT);
 
     clear();
+
+    // draw a grid on the tile window
+    SDL_SetRenderDrawColor(tileRenderer, 255, 255, 255, 255);
+    for (int i = 0; i < 32; i++)
+    {
+        SDL_RenderDrawLine(tileRenderer, i * 8, 0, i * 8, 256);
+        SDL_RenderDrawLine(tileRenderer, 0, i * 8, 256, i * 8);
+    }
+    SDL_RenderPresent(tileRenderer);
 }
 
 Display::~Display()
@@ -127,8 +140,13 @@ void Display::update(uint8_t cycles)
         scanlineCounter = 2;
         if (currentScanline == 144)
         {
+            renderCurrentFrame();
+            // print the frame buffer
             cpu->requestInterrupt(0);
             // set the vblank interrupt
+            // drawTiles();
+            // SDL_RenderPresent(tileRenderer);
+
             memory->writeByte(0xFF0F, memory->readByte(0xFF0F) | 0x01);
         }
         else if (currentScanline > 153)
@@ -139,12 +157,11 @@ void Display::update(uint8_t cycles)
         {
             // std::cout << "Drawing scanline " << (int)currentScanline << std::endl;
             drawScanLine();
+            // draw the frame buffer
         }
-     
     }
-    // get the frame buffer and draw it
-    SDL_RenderPresent(renderer);
-
+    // // get the frame buffer and draw it
+    // SDL_RenderPresent(tileRenderer);
 }
 
 void Display::drawScanLine()
@@ -177,12 +194,12 @@ void Display::drawBackground()
 
     // print where the background should be drawn
 
-    bool unsig = bitIsSet(lcdc, 4);  // if this bit is set, the tile data is unsigned (0x8000 to 0x8FFF), otherwise it is signed (0x8800 to 0x97FF
-    uint16_t tileData = bitIsSet(lcdc, 4) ? 0x8000 : 0x8800; // this is where the actual tile data is stored
-    uint16_t backgroundMemory = bitIsSet(lcdc, 3) ? 0x9C00 : 0x9800; // this is where the background map is stored (each byte represents a tile number)   
-    uint8_t yPos = scrollY + scanline; // the y position of the pixel is the start of the background + the current scanline
-    uint16_t tileRow = ((uint8_t)yPos / 8) * 32; // this moves us to the start of the map for this row of tiles
-    
+    bool unsig = bitIsSet(lcdc, 4);                                  // if this bit is set, the tile data is unsigned (0x8000 to 0x8FFF), otherwise it is signed (0x8800 to 0x97FF
+    uint16_t tileData = bitIsSet(lcdc, 4) ? 0x8000 : 0x8800;         // this is where the actual tile data is stored
+    uint16_t backgroundMemory = bitIsSet(lcdc, 3) ? 0x9C00 : 0x9800; // this is where the background map is stored (each byte represents a tile number)
+    uint8_t yPos = scrollY + scanline;                               // the y position of the pixel is the start of the background + the current scanline
+    uint16_t tileRow = ((uint8_t)yPos / 8) * 32;                     // this moves us to the start of the map for this row of tiles
+
     for (int pixel = 0; pixel < 160; pixel++)
     {
         uint8_t xPos = pixel + scrollX;
@@ -198,37 +215,71 @@ void Display::drawBackground()
             int8_t signedTileNum = (int8_t)memory->readByte(tileAddress);
             tileNum = 256 + signedTileNum;
         }
-        uint16_t tileLocation = tileData + (tileNum * 16); // this gets the start of the tile data
-        uint8_t line = yPos % 8; // the line of the tile we are on
-        uint16_t data1 = memory->readByte(tileLocation + (line * 2)); // get the first byte of the tile data
+        uint16_t tileLocation = tileData + (tileNum * 16);                // this gets the start of the tile data
+        uint8_t line = yPos % 8;                                          // the line of the tile we are on
+        uint16_t data1 = memory->readByte(tileLocation + (line * 2));     // get the first byte of the tile data
         uint16_t data2 = memory->readByte(tileLocation + (line * 2) + 1); // get the second byte of the tile data
 
-        int colorBit = xPos % 8; // the bit of the tile we are on
+        int colorBit = xPos % 8;                        // the bit of the tile we are on
         int colorNum = (data2 >> (7 - colorBit)) & 0x1; // get the color number
-        colorNum <<= 1; // shift the color number to the left by 1
-        colorNum |= (data1 >> (7 - colorBit)) & 0x1; // get the color number
+        colorNum <<= 1;                                 // shift the color number to the left by 1
+        colorNum |= (data1 >> (7 - colorBit)) & 0x1;    // get the color number
         RGB color = CLASSIC_PALLETE[colorNum];
-        drawPixel(pixel, scanline, color);
+        pixels[(scanline * 160) + pixel] = color;
     }
-
-    
- 
 }
 
-void Display::drawPixel(int x, int y, RGB color)
+void Display::drawTiles()
 {
-    SDL_SetRenderDrawColor(renderer, color.red, color.green, color.blue, 255);
-    SDL_RenderDrawPoint(renderer, x, y);
+    uint16_t tileData = 0x8000;
+
+    for (int tileY = 0; tileY < 32; tileY++)
+    {
+        for (int tileX = 0; tileX < 32; tileX++)
+        {
+            uint16_t tileLocation = tileData + (memory->readByte(0x9800 + (tileY * 32) + tileX) * 16);
+            for (int row = 0; row < 8; row++)
+            {
+                uint8_t data1 = memory->readByte(tileLocation + (row * 2));
+                uint8_t data2 = memory->readByte(tileLocation + (row * 2) + 1);
+                if (data1 == 0 && data2 == 0)
+                {
+                    continue;
+                }
+                for (int col = 0; col < 8; col++)
+                {
+                    int colorBit = 1 << (7 - col);
+                    int colorNum = ((data2 & colorBit) ? 1 : 0) << 1;
+                    colorNum |= (data1 & colorBit) ? 1 : 0;
+                    RGB color = CLASSIC_PALLETE[colorNum];
+                    drawPixelTile(tileX * 8 + col, tileY * 8 + row, color);
+                }
+            }
+        }
+    }
+}
+
+void Display::drawPixelTile(int x, int y, RGB color)
+{
+    SDL_SetRenderDrawColor(tileRenderer, color.red, color.green, color.blue, 255);
+    SDL_RenderDrawPoint(tileRenderer, x, y);
 }
 
 void Display::drawSprites()
 {
     std::cout << "Drawing sprites" << std::endl;
-   
 }
 
 void Display::clear()
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+}
+
+void Display::renderCurrentFrame()
+{
+    SDL_UpdateTexture(texture, NULL, pixels, SCREEN_WIDTH * sizeof(uint8_t) * 3);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
 }

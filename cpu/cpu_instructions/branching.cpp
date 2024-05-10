@@ -18,11 +18,6 @@ NUM_CYCLES CPU::opcode0xC3()
     return 16;
 } // JUMP TO ADDRESS
 
-NUM_CYCLES CPU::opcode0xE9()
-{
-    registers.pc = registers.hl - 1; 
-    return 4;
-} // JUMP TO HL
 
 NUM_CYCLES CPU::opcode0xC2()
 {
@@ -79,7 +74,7 @@ NUM_CYCLES CPU::opcode0xDA()
 NUM_CYCLES CPU::opcode0x18()
 {
     int8_t offset = memory->readByte(registers.pc + 1);
-    registers.pc += offset - 1;
+    registers.pc += offset + 1;
     return 12;
 } // JUMP TO PC + n
 
@@ -130,6 +125,14 @@ NUM_CYCLES CPU::opcode0x38()
     registers.pc += 1;
     return 8;
 } // JUMP TO PC + n IF CARRY
+
+NUM_CYCLES CPU::opcode0xE9 ()
+{
+    registers.pc = registers.hl - 1;
+    return 4;
+} // JUMP TO HL
+
+
 
 // CALL INSTRUCTIONS
 NUM_CYCLES CPU::opcode0xCD()

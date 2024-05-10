@@ -583,6 +583,37 @@ NUM_CYCLES CPU::opcode0xF9()
     return 8;
 } // LD SP, HL
 
+NUM_CYCLES CPU::opcode0xF8()
+{
+    int8_t offset = memory->readByte(registers.pc + 1);
+    uint16_t result = registers.sp + offset;
+
+    registers.flags.reset();
+
+    if (((registers.sp ^ offset ^ result) & 0x100) == 0x100)
+    {
+        registers.flags.raiseFlag(FlagTypes::CARRY);
+    }   
+
+    if (((registers.sp ^ offset ^ result) & 0x10) == 0x10)
+    {
+        registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
+    }
+    registers.hl = result;
+    registers.pc += 1;
+
+    return 12;
+} // LD HL, SP + n
+
+NUM_CYCLES CPU::opcode0x08()
+{
+    uint16_t address = load16BitFromPC();
+    memory->writeByte(address, registers.sp & 0xFF);
+    memory->writeByte(address + 1, registers.sp >> 8);
+    registers.pc += 2;
+    return 20;
+} // LD (NUMBER), SP
+
 // PUSH AND POP INSTRUCTIONS
 NUM_CYCLES CPU::opcode0xF5()
 {

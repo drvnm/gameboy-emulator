@@ -4,7 +4,8 @@
 #include <iostream>
 #include <fstream>
 
-Cartridge::Cartridge(std::string romFile) {
+Cartridge::Cartridge(std::string romFile, Debugger* debugger) {
+    this->debugger = debugger;
     std::cout << "Loading rom..." << std::endl;
     
     std::vector<uint8_t> rom;

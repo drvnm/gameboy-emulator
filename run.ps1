@@ -14,4 +14,4 @@ display/display.cpp `
 emulator/emulator.cpp `
 -I"../SDL2/i686-w64-mingw32/include" `
 -L"../SDL2/i686-w64-mingw32/lib" -Wall -lmingw32 `
--lSDL2main -lSDL2 ; ./a.exe '..\test_roms\DMG_ROM.bin'
+-lSDL2main -lSDL2 ; ./a.exe '..\test_roms\04-op r,imm.gb'

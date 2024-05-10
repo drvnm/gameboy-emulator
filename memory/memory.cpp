@@ -1,14 +1,19 @@
 #include "memory.h"
 #include <iostream>
 
-Memory::Memory(Cartridge *cartridge)
+Memory::Memory(Cartridge *cartridge, Debugger *debugger)
 {
+    this->debugger = debugger;
     reset();
     romSize = cartridge->rom.size();
     std::cout << "rom size: " << romSize << std::endl;
     for (size_t i = 0; i < cartridge->rom.size(); i++)
     {
         map[i] = cartridge->rom[i];
+        if(i > 0x8000) 
+        {
+            std::cout << "rom[" << i << "]: " << (int)map[i] << std::endl;
+        }
     }
 }
 
@@ -73,13 +78,13 @@ void Memory::writeByte(uint16_t address, uint8_t value)
         map[address] = value;
     }
 
-    // if (address == 0xFF02)
-    // {
-    //     throw std::runtime_error("Serial I/O not implemented");
-    // }
-    // else if (address == 0xff01)
-    // {
-    //     throw std::runtime_error("Serial I/O not implemented");
-    // }
+    if (address == 0xFF02)
+    {
+        std::cout << (char)map[address];
+    }
+    else if (address == 0xff01)
+    {
+       std::cout << (char)map[address];
+    }
 }
 // }

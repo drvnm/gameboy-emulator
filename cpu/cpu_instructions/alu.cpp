@@ -47,6 +47,51 @@ NUM_CYCLES CPU::opcode0x80()
     return 4;
 } // ADD A B
 
+void CPU::add16bit(REGISTER16 *reg, uint16_t value)
+{
+    registers.flags.lowerFlag(FlagTypes::ADDSUB);
+
+    if((( *reg & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF)
+    {
+        registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
+    } else {
+        registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
+    }
+
+    if(*reg + value > 0xFFFF)
+    {
+        registers.flags.raiseFlag(FlagTypes::CARRY);
+    } else {
+        registers.flags.lowerFlag(FlagTypes::CARRY);
+    }
+
+    *reg += value;
+}
+
+NUM_CYCLES CPU::opcode0x09()
+{
+    add16bit(&registers.hl, registers.bc);
+    return 8;
+} // ADD HL BC
+
+NUM_CYCLES CPU::opcode0x19()
+{
+    add16bit(&registers.hl, registers.de);
+    return 8;
+} // ADD HL DE
+
+NUM_CYCLES CPU::opcode0x29()
+{
+    add16bit(&registers.hl, registers.hl);
+    return 8;
+} // ADD HL HL
+
+NUM_CYCLES CPU::opcode0x39()
+{
+    add16bit(&registers.hl, registers.sp);
+    return 8;
+} // ADD HL SP
+
 NUM_CYCLES CPU::opcode0x81()
 {
     add8bit(&registers.a, registers.c);
@@ -86,15 +131,18 @@ NUM_CYCLES CPU::opcode0x86()
 NUM_CYCLES CPU::opcode0xC6()
 {
     add8bit(&registers.a, memory->readByte(registers.pc + 1));
+    registers.pc += 1;
     return 8;
 } // ADD A n
 
 // ADC INSTRUCTIONS
 void CPU::adc8bit(REGISTER *reg, uint8_t value)
 {
-    uint8_t carry = registers.flags.carry ? 0b1 : 0b0;
-    uint8_t result = *reg + value + carry;
+    uint8_t carry = registers.flags.carry ? 0x1 : 0x0;
+    uint8_t result = *reg + carry + value;
 
+    registers.flags.lowerFlag(FlagTypes::ADDSUB);
+    
     if (result > 0xFF)
     {
         registers.flags.raiseFlag(FlagTypes::CARRY);
@@ -103,7 +151,6 @@ void CPU::adc8bit(REGISTER *reg, uint8_t value)
     {
         registers.flags.lowerFlag(FlagTypes::CARRY);
     }
-    registers.flags.lowerFlag(FlagTypes::ADDSUB);
 
     if (result == 0)
     {
@@ -365,17 +412,12 @@ NUM_CYCLES CPU::opcode0xDE()
 void CPU::and8bit(REGISTER *reg, uint8_t value)
 {
     *reg &= value;
-    registers.flags.lowerFlag(FlagTypes::CARRY);
+    registers.flags.reset();
     registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
-    registers.flags.lowerFlag(FlagTypes::ADDSUB);
 
     if (*reg == 0)
     {
         registers.flags.raiseFlag(FlagTypes::ZERO);
-    }
-    else
-    {
-        registers.flags.lowerFlag(FlagTypes::ZERO);
     }
 }
 
@@ -438,17 +480,12 @@ NUM_CYCLES CPU::opcode0xE6()
 void CPU::or8bit(REGISTER *reg, uint8_t value)
 {
     *reg |= value;
-    registers.flags.lowerFlag(FlagTypes::CARRY);
-    registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
-    registers.flags.lowerFlag(FlagTypes::ADDSUB);
+    
+    registers.flags.reset();
 
     if (*reg == 0)
     {
         registers.flags.raiseFlag(FlagTypes::ZERO);
-    }
-    else
-    {
-        registers.flags.lowerFlag(FlagTypes::ZERO);
     }
 }
 
@@ -511,17 +548,12 @@ NUM_CYCLES CPU::opcode0xF6()
 void CPU::xor8bit(REGISTER *reg, uint8_t value)
 {
     *reg ^= value;
-    registers.flags.lowerFlag(FlagTypes::CARRY);
-    registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
-    registers.flags.lowerFlag(FlagTypes::ADDSUB);
+    
+    registers.flags.reset();
 
     if (*reg == 0)
     {
         registers.flags.raiseFlag(FlagTypes::ZERO);
-    }
-    else
-    {
-        registers.flags.lowerFlag(FlagTypes::ZERO);
     }
 }
 
@@ -657,11 +689,13 @@ NUM_CYCLES CPU::opcode0xFE()
 // INC INSTRUCTIONS
 void CPU::inc8bit(REGISTER *reg)
 {
-    *reg += 1;
+    *reg = *reg + 1;
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
     if (*reg == 0)
     {
         registers.flags.raiseFlag(FlagTypes::ZERO);
+    } else {
+        registers.flags.lowerFlag(FlagTypes::ZERO);
     }
     if ((*reg & 0x0F) == 0)
     {
@@ -755,11 +789,13 @@ NUM_CYCLES CPU::opcode0x33()
 // DEC INSTRUCTIONS
 void CPU::dec8bit(REGISTER *reg)
 {
-    *reg -= 1;
+    *reg = *reg - 1;
     registers.flags.raiseFlag(FlagTypes::ADDSUB);
     if (*reg == 0)
     {
         registers.flags.raiseFlag(FlagTypes::ZERO);
+    } else {
+        registers.flags.lowerFlag(FlagTypes::ZERO);
     }
     if ((*reg & 0x0F) == 0)
     {
