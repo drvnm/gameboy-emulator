@@ -12,7 +12,6 @@ NUM_CYCLES CPU::opcode0xC3()
 {
     uint16_t address = load16BitFromPC();
 
-    std::cout << "JUMP TO ADDRESS: " << std::hex << address << std::endl;
 
     registers.pc = address - 1;
     return 16;
@@ -73,56 +72,57 @@ NUM_CYCLES CPU::opcode0xDA()
 
 NUM_CYCLES CPU::opcode0x18()
 {
-    int8_t offset = memory->readByte(registers.pc + 1);
-    registers.pc += offset + 1;
+    registers.pc += 1;
+    int8_t offset = memory->readByte(registers.pc);
+    registers.pc += offset;
     return 12;
 } // JUMP TO PC + n
 
 NUM_CYCLES CPU::opcode0x20()
 {
-    int8_t offset = memory->readByte(registers.pc + 1);
+    registers.pc += 1;
+    int8_t offset = memory->readByte(registers.pc);
     if (!registers.flags.zero)
     {   
-        registers.pc += offset + 1; // because this instruction takes 2 bytes
+        registers.pc += offset; 
         return 12;
     }
-    registers.pc += 1;
     return 8;
 } // JUMP TO PC + n IF NOT ZERO
 
 NUM_CYCLES CPU::opcode0x28()
 {
-    int8_t offset = memory->readByte(registers.pc + 1);
+    registers.pc += 1;
+    int8_t offset = memory->readByte(registers.pc);
     if (registers.flags.zero)
     {
-        registers.pc += offset + 1;
+        registers.pc += offset;
         return 12;
     }
-    registers.pc += 1;
-    return 8;
+   return 8;
 } // JUMP TO PC + n IF ZERO
 
 NUM_CYCLES CPU::opcode0x30()
 {
-    int8_t offset = memory->readByte(registers.pc + 1);
+    registers.pc += 1;
+    int8_t offset = memory->readByte(registers.pc);
     if (!registers.flags.carry)
     {
-        registers.pc += offset + 1;
+        registers.pc += offset;
         return 12;
     }
-    registers.pc += 1;
     return 8;
 } // JUMP TO PC + n IF NOT CARRY
 
 NUM_CYCLES CPU::opcode0x38()
 {
-    int8_t offset = memory->readByte(registers.pc + 1);
+    registers.pc += 1;
+    int8_t offset = memory->readByte(registers.pc);
     if (registers.flags.carry)
     {
-        registers.pc += offset + 1;
+        registers.pc += offset;
         return 12;
     }
-    registers.pc += 1;
     return 8;
 } // JUMP TO PC + n IF CARRY
 

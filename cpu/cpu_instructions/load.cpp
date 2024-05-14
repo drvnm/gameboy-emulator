@@ -436,8 +436,8 @@ NUM_CYCLES CPU::opcode0x75()
 
 NUM_CYCLES CPU::opcode0x36()
 {
-    memory->writeByte(registers.hl, memory->readByte(registers.pc + 1));
     registers.pc += 1;
+    memory->writeByte(registers.hl, memory->readByte(registers.pc));
     return 12;
 } // LD (HL), NUMBER
 

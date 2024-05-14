@@ -67,6 +67,13 @@ void Emulator::run()
                     debugger->doPrint = !debugger->doPrint;
                 }
             }
+            if (e.type == SDL_KEYDOWN)
+            {
+                if (e.key.keysym.sym == SDLK_3)
+                {
+                    debugger->doTileRender = true;
+                }
+            }
         }
         if (quit)
         {

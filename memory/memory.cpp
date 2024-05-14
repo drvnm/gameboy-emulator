@@ -78,13 +78,9 @@ void Memory::writeByte(uint16_t address, uint8_t value)
         map[address] = value;
     }
 
-    if (address == 0xFF02)
+    if (address == 0xFF02 && value == 0x81)
     {
-        std::cout << (char)map[address];
-    }
-    else if (address == 0xff01)
-    {
-       std::cout << (char)map[address];
+        std::cout << (char)map[0xFF01];
     }
 }
 // }

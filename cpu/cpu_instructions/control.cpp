@@ -4,7 +4,7 @@
 
 NUM_CYCLES CPU::opcode0x3F()
 {
-    registers.flags.carry ^= 1;
+    registers.flags.carry = !registers.flags.carry;
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
     registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
     return 1;
@@ -12,7 +12,7 @@ NUM_CYCLES CPU::opcode0x3F()
 
 NUM_CYCLES CPU::opcode0x37()
 {
-    registers.flags.carry = 1;
+    registers.flags.raiseFlag(FlagTypes::CARRY);
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
     registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
     return 1;
@@ -31,7 +31,7 @@ NUM_CYCLES CPU::opcode0x76()
 
 NUM_CYCLES CPU::opcode0x10()
 {
-    throw std::runtime_error("STOP instruction not implemented");
+    registers.pc += 1;
     return 1;
 } // STOP
 
@@ -46,3 +46,4 @@ NUM_CYCLES CPU::opcode0xFB()
     registers.ime = true;
     return 1;
 } // EI
+

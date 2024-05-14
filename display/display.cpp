@@ -132,20 +132,24 @@ void Display::update(uint8_t cycles)
         // std::cout << "LCD is not enabled" << std::endl;
         return;
     }
-    if (scanlineCounter <= 0)
+    if (scanlineCounter <= 0) 
     {
         // move to the next scanline
         memory->map[0xFF44]++;
         uint8_t currentScanline = memory->readByte(0xFF44);
-        scanlineCounter = 2;
+        scanlineCounter = 0;
         if (currentScanline == 144)
         {
             renderCurrentFrame();
+            if (debugger->doTileRender)
+            {
+                drawTiles();
+                SDL_RenderPresent(tileRenderer);
+                debugger->doTileRender = false;
+            }
             // print the frame buffer
             cpu->requestInterrupt(0);
             // set the vblank interrupt
-            // drawTiles();
-            // SDL_RenderPresent(tileRenderer);
 
             memory->writeByte(0xFF0F, memory->readByte(0xFF0F) | 0x01);
         }

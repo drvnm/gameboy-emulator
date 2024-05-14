@@ -6,4 +6,5 @@ public:
     bool doPause = false;
     bool doStep = false;
     bool doPrint = false;
+    bool doTileRender = false;
 };

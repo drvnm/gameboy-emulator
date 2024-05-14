@@ -613,6 +613,7 @@ public:
     NUM_CYCLES extendedOpcode0xBD(); // RES 7, HL.LOW
     NUM_CYCLES extendedOpcode0xBE(); // RES 7, (HL)
 
+    // STOP INSTRUCTIONS
     CPU(Memory *memory, Debugger *debugger);
     uint8_t step();
 };

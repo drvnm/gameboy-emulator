@@ -51,17 +51,21 @@ void CPU::add16bit(REGISTER16 *reg, uint16_t value)
 {
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
 
-    if((( *reg & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF)
+    if (((*reg & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF)
     {
         registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
-    } else {
+    }
+    else
+    {
         registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
     }
 
-    if(*reg + value > 0xFFFF)
+    if (*reg + value > 0xFFFF)
     {
         registers.flags.raiseFlag(FlagTypes::CARRY);
-    } else {
+    }
+    else
+    {
         registers.flags.lowerFlag(FlagTypes::CARRY);
     }
 
@@ -130,8 +134,8 @@ NUM_CYCLES CPU::opcode0x86()
 
 NUM_CYCLES CPU::opcode0xC6()
 {
-    add8bit(&registers.a, memory->readByte(registers.pc + 1));
     registers.pc += 1;
+    add8bit(&registers.a, memory->readByte(registers.pc));
     return 8;
 } // ADD A n
 
@@ -142,7 +146,7 @@ void CPU::adc8bit(REGISTER *reg, uint8_t value)
     uint8_t result = *reg + carry + value;
 
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
-    
+
     if (result > 0xFF)
     {
         registers.flags.raiseFlag(FlagTypes::CARRY);
@@ -480,7 +484,7 @@ NUM_CYCLES CPU::opcode0xE6()
 void CPU::or8bit(REGISTER *reg, uint8_t value)
 {
     *reg |= value;
-    
+
     registers.flags.reset();
 
     if (*reg == 0)
@@ -548,7 +552,7 @@ NUM_CYCLES CPU::opcode0xF6()
 void CPU::xor8bit(REGISTER *reg, uint8_t value)
 {
     *reg ^= value;
-    
+
     registers.flags.reset();
 
     if (*reg == 0)
@@ -694,16 +698,18 @@ void CPU::inc8bit(REGISTER *reg)
     if (*reg == 0)
     {
         registers.flags.raiseFlag(FlagTypes::ZERO);
-    } else {
-        registers.flags.lowerFlag(FlagTypes::ZERO);
-    }
-    if ((*reg & 0x0F) == 0)
-    {
-        registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
     }
     else
     {
+        registers.flags.lowerFlag(FlagTypes::ZERO);
+    }
+    if (*reg & 0x0F)
+    {
         registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
+    }
+    else
+    {
+        registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
     }
 }
 
@@ -794,7 +800,9 @@ void CPU::dec8bit(REGISTER *reg)
     if (*reg == 0)
     {
         registers.flags.raiseFlag(FlagTypes::ZERO);
-    } else {
+    }
+    else
+    {
         registers.flags.lowerFlag(FlagTypes::ZERO);
     }
     if ((*reg & 0x0F) == 0)
@@ -885,7 +893,6 @@ NUM_CYCLES CPU::opcode0x3B()
     dec16bit(&registers.sp);
     return 8;
 } // DEC SP
-
 
 // DAA INSTRUCTIONS
 NUM_CYCLES CPU::opcode0x27()
