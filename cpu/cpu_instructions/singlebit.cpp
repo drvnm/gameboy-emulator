@@ -463,6 +463,7 @@ NUM_CYCLES CPU::extendedOpcode0x86()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 0);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 0, (HL)
 
@@ -512,6 +513,7 @@ NUM_CYCLES CPU::extendedOpcode0x8E()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 1);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 1, (HL)
 
@@ -561,6 +563,7 @@ NUM_CYCLES CPU::extendedOpcode0x96()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 2);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 2, (HL)
 
@@ -610,6 +613,7 @@ NUM_CYCLES CPU::extendedOpcode0x9E()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 3);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 3, (HL)
 
@@ -659,6 +663,7 @@ NUM_CYCLES CPU::extendedOpcode0xA6()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 4);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 4, (HL)
 
@@ -710,6 +715,7 @@ NUM_CYCLES CPU::extendedOpcode0xAE()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 5);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 5, (HL)
 
@@ -759,6 +765,7 @@ NUM_CYCLES CPU::extendedOpcode0xB6()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 6);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 6, (HL)
 
@@ -808,6 +815,7 @@ NUM_CYCLES CPU::extendedOpcode0xBE()
 {
     uint8_t data = memory->readByte(registers.hl);
     res(&data, 7);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // res 7, (HL)
 
@@ -866,6 +874,8 @@ NUM_CYCLES CPU::extendedOpcode0xC5()
 NUM_CYCLES CPU::extendedOpcode0xC6()
 {
     uint8_t data = memory->readByte(registers.hl);
+    set(&data, 0);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 0, (HL)
 
@@ -915,6 +925,7 @@ NUM_CYCLES CPU::extendedOpcode0xCE()
 {
     uint8_t data = memory->readByte(registers.hl);
     set(&data, 1);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 1, (HL)
 
@@ -964,6 +975,7 @@ NUM_CYCLES CPU::extendedOpcode0xD6()
 {
     uint8_t data = memory->readByte(registers.hl);
     set(&data, 2);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 2, (HL)
 
@@ -1013,6 +1025,7 @@ NUM_CYCLES CPU::extendedOpcode0xDE()
 {
     uint8_t data = memory->readByte(registers.hl);
     set(&data, 3);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 3, (HL)
 
@@ -1062,6 +1075,7 @@ NUM_CYCLES CPU::extendedOpcode0xE6()
 {
     uint8_t data = memory->readByte(registers.hl);
     set(&data, 4);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 4, (HL)
 
@@ -1111,6 +1125,7 @@ NUM_CYCLES CPU::extendedOpcode0xEE()
 {
     uint8_t data = memory->readByte(registers.hl);
     set(&data, 5);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 5, (HL)
 
@@ -1160,6 +1175,7 @@ NUM_CYCLES CPU::extendedOpcode0xF6()
 {
     uint8_t data = memory->readByte(registers.hl);
     set(&data, 6);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 6, (HL)
 
@@ -1209,6 +1225,7 @@ NUM_CYCLES CPU::extendedOpcode0xFE()
 {
     uint8_t data = memory->readByte(registers.hl);
     set(&data, 7);
+    memory->writeByte(registers.hl, data);
     return 16;
 } // set 7, (HL)
 

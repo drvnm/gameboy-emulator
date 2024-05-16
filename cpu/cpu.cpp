@@ -2,6 +2,13 @@
 
 #include "cpu.h"
 
+#define REQUIRE(condition, message) \
+    if (!(condition))               \
+    {                               \
+        std::cerr << message << std::endl; \
+        throw std::runtime_error(message); \
+    }
+
 CPU::CPU(Memory *memory, Debugger *debugger)
 {
     this->memory = memory;
@@ -89,14 +96,16 @@ uint8_t CPU::executeInstruction(OPCODE opcode)
         if (extendedOpcodes[extendedOpcode] != nullptr)
         {
             // read instruction from opcode table
-            if(debugger->doPrint) std::cout << "Executing extended opcode: " << std::hex << (int)extendedOpcode << " at address: " << std::hex << registers.pc << " Instruction: " << extendedOpcodeDescriptionTable[extendedOpcode].name << std::endl;
+            if (debugger->doPrint)
+                std::cout << "Executing extended opcode: " << std::hex << (int)extendedOpcode << " at address: " << std::hex << registers.pc << " Instruction: " << extendedOpcodeDescriptionTable[extendedOpcode].name << std::endl;
             short cycles = (this->*extendedOpcodes[extendedOpcode])();
             registers.pc += 1; // to account for the extended opcode
             return cycles;
         }
         else
         {
-             if(debugger->doPrint) std::cout << "Extended opcode " << std::hex << (int)extendedOpcode << " not implemented at address: " << std::hex << registers.pc << std::endl;
+            if (debugger->doPrint)
+                std::cout << "Extended opcode " << std::hex << (int)extendedOpcode << " not implemented at address: " << std::hex << registers.pc << std::endl;
             throw std::runtime_error("Extended opcode not implemented");
         }
     }
@@ -106,17 +115,20 @@ uint8_t CPU::executeInstruction(OPCODE opcode)
         if (opcodeDescriptionTable[opcode].size == 1)
         {
             firstByte = memory->map[registers.pc + 1];
-             if(debugger->doPrint) std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << std::endl;
+            if (debugger->doPrint)
+                std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << std::endl;
         }
         else if (opcodeDescriptionTable[opcode].size == 2)
         {
             firstByte = memory->map[registers.pc + 1];
             secondByte = memory->map[registers.pc + 2];
-            if(debugger->doPrint)  std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << " " << std::hex << (int)secondByte << std::endl;
+            if (debugger->doPrint)
+                std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << " " << std::hex << (int)firstByte << " " << std::hex << (int)secondByte << std::endl;
         }
         else
         {
-            if(debugger->doPrint)  std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << std::endl;
+            if (debugger->doPrint)
+                std::cout << "Executing opcode: " << std::hex << (int)opcode << " at address: " << std::hex << registers.pc << " Instruction: " << opcodeDescriptionTable[opcode].name << std::endl;
         }
         return (this->*opcodes[opcode])();
     }
@@ -251,6 +263,7 @@ void CPU::setupOpcodes()
     opcodes[0x19] = &CPU::opcode0x19;
     opcodes[0x29] = &CPU::opcode0x29;
     opcodes[0x39] = &CPU::opcode0x39;
+    opcodes[0xE8] = &CPU::opcode0xE8;
 
     // ADC INSTRUCTIONS
     opcodes[0x8F] = &CPU::opcode0x8F;
@@ -404,6 +417,7 @@ void CPU::setupOpcodes()
     opcodes[0xC7] = &CPU::opcode0xC7;
     opcodes[0xCF] = &CPU::opcode0xCF;
     opcodes[0xD7] = &CPU::opcode0xD7;
+    opcodes[0xDF] = &CPU::opcode0xDF;
     opcodes[0xE7] = &CPU::opcode0xE7;
     opcodes[0xEF] = &CPU::opcode0xEF;
     opcodes[0xF7] = &CPU::opcode0xF7;
@@ -727,4 +741,131 @@ uint16_t CPU::load16BitFromPC()
     uint8_t low = memory->readByte(registers.pc + 1);
     uint8_t high = memory->readByte(registers.pc + 2);
     return (high << 8) | low;
+}
+
+void CPU::runJSONtests(nlohmann::json_abi_v3_11_3::json tests)
+{
+    std::cout << "Running tests" << std::endl;
+    std::cout << "Number of tests: " << tests.size() << std::endl;
+    for (auto &test : tests)
+    {
+        auto initialStates = test["initial"];
+        registers.pc = initialStates["pc"];
+        registers.sp = initialStates["sp"];
+        registers.a = initialStates["a"];
+        registers.b = initialStates["b"];
+        registers.c = initialStates["c"];
+        registers.d = initialStates["d"];
+        registers.e = initialStates["e"];
+        registers.f = initialStates["f"];
+        registers.h = initialStates["h"];
+        registers.l = initialStates["l"];
+
+        auto ramStates = initialStates["ram"];
+        for (auto &ramState : ramStates)
+        {
+            memory->writeByte(ramState[0], ramState[1]);
+        }
+
+        auto cycles = test["cycles"];
+        for (auto &cycle : cycles)
+        {
+            if(std::string(cycle[2]).at(0) == 'r') memory->writeByte(cycle[0], cycle[1]);
+            // if(std::string(test["name"]) == "F0 021E") {
+            //     // read memory
+            //     std::cout << "Reading memory at: " << cycle[0] << " Value: " << (int)memory->readByte(cycle[0]) << std::endl;
+            // }
+        }
+        step();
+        auto finalStates = test["final"];
+        if (registers.pc != finalStates["pc"])
+        {
+            std::cout << "Failed test: " << test["name"] << " PC" << std::endl;
+            std::cout << "Expected: " << finalStates["pc"] << " Got: " << registers.pc << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " PC: " << registers.pc << " Expected: " << finalStates["pc"] << std::endl;
+        }
+        if (registers.sp != finalStates["sp"])
+        {
+            std::cout << "Failed test: " << test["name"] << " SP" << std::endl;
+            std::cout << "Expected: " << finalStates["sp"] << " Got: " << registers.sp << std::endl;
+        }
+        else {
+            // std::cout << "Passed test: " << test["name"] << " SP: " << registers.sp << " Expected: " << finalStates["sp"] << std::endl;
+        }
+        if (registers.a != finalStates["a"])
+        {
+            std::cout << "Failed test: " << test["name"] << " A" << std::endl;
+            std::cout << "Expected: " << finalStates["a"] << " Got: " << (int)registers.a << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " A: " << (int)registers.a << " Expected: " << finalStates["a"] << std::endl;
+        }
+        if (registers.b != finalStates["b"])
+        {
+            std::cout << "Failed test: " << test["name"] << " B" << std::endl;
+            std::cout << "Expected: " << finalStates["b"] << " Got: " << (int)registers.b << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " B: " << (int)registers.b << " Expected: " << finalStates["b"] << std::endl;
+        }
+        if (registers.c != finalStates["c"])
+        {
+            std::cout << "Failed test: " << test["name"] << " C" << std::endl;
+            std::cout << "Expected: " << finalStates["c"] << " Got: " << (int)registers.c << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " C: " << (int)registers.c << " Expected: " << finalStates["c"] << std::endl;
+        }
+        if (registers.d != finalStates["d"])
+        {
+            std::cout << "Failed test: " << test["name"] << " D" << std::endl;
+            std::cout << "Expected: " << finalStates["d"] << " Got: " << (int)registers.d << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " D: " << (int)registers.d << " Expected: " << finalStates["d"] << std::endl;
+        }
+        if (registers.e != finalStates["e"])
+        {
+            std::cout << "Failed test: " << test["name"] << " E" << std::endl;
+            std::cout << "Expected: " << finalStates["e"] << " Got: " << (int)registers.e << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " E: " << (int)registers.e << " Expected: " << finalStates["e"] << std::endl;
+        }
+        if (registers.f != finalStates["f"])
+        {
+            std::cout << "Failed test: " << test["name"] << " F" << std::endl;
+            std::cout << "Expected: " << finalStates["f"] << " Got: " << (int)registers.f << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " F: " << (int)registers.f << " Expected: " << finalStates["f"] << std::endl;
+        }
+        if (registers.h != finalStates["h"])
+        {
+            std::cout << "Failed test: " << test["name"] << " H" << std::endl;
+            std::cout << "Expected: " << finalStates["h"] << " Got: " << (int)registers.h << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " H: " << (int)registers.h << " Expected: " << finalStates["h"] << std::endl;
+        }
+        if (registers.l != finalStates["l"])
+        {
+            std::cout << "Failed test: " << test["name"] << " L" << std::endl;
+            std::cout << "Expected: " << finalStates["l"] << " Got: " << (int)registers.l << std::endl;
+        } else {
+            // std::cout << "Passed test: " << test["name"] << " L: " << (int)registers.l << " Expected: " << finalStates["l"] << std::endl;
+        }
+        auto finalRamState = finalStates["ram"];
+        for (auto &ramState : finalRamState)
+        {
+            // if(std::string(test["name"]) == "F0 021E") {
+            //     // read memory
+            //     std::cout << "Reading memory at: " << ramState[0] << " Value: " << (int)memory->readByte(ramState[0]) << std::endl;
+            // }
+            if (memory->readByte(ramState[0]) != ramState[1])
+            {
+                std::cout << "Failed test: " << test["name"] << " RAM" << std::endl;
+                std::cout << "Expected: " << ramState[1] << " Got: " << (int)memory->readByte(ramState[0]) << std::endl;
+            } else {
+                // std::cout << "Passed test: " << test["name"] << " RAM: " << (int)memory->readByte(ramState[0]) << " Expected: " << ramState[1] << std::endl;
+            }
+        }
+
+      
+
+    }
 }

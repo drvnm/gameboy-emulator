@@ -6,6 +6,7 @@
 #include "registers.h"
 #include "../memory/memory.h"
 #include "../debugger/debugger.h"
+#include "../libs/json.hpp"
 
 
 // emulates the CPU of the gameboy (the sharp LR35902)
@@ -161,6 +162,7 @@ public:
     NUM_CYCLES opcode0x19(); // ADD HL, DE
     NUM_CYCLES opcode0x29(); // ADD HL, HL
     NUM_CYCLES opcode0x39(); // ADD HL, SP
+    NUM_CYCLES opcode0xE8(); // ADD SP, NUMBER
 
 
 
@@ -614,6 +616,7 @@ public:
     NUM_CYCLES extendedOpcode0xBE(); // RES 7, (HL)
 
     // STOP INSTRUCTIONS
-    CPU(Memory *memory, Debugger *debugger);
     uint8_t step();
+    CPU(Memory *memory, Debugger *debugger);
+    void runJSONtests(nlohmann::json_abi_v3_11_3::json tests);
 };

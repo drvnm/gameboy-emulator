@@ -14,16 +14,16 @@ void CPU::add8bit(REGISTER *reg, uint8_t value)
     }
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
 
-    if (*reg + value == 0)
-    {
-        registers.flags.raiseFlag(FlagTypes::ZERO);
-    }
-    else
+    if ((*reg + value) & 0xFF)
     {
         registers.flags.lowerFlag(FlagTypes::ZERO);
     }
+    else
+    {
+        registers.flags.raiseFlag(FlagTypes::ZERO);
+    }
 
-    if (((*reg & 0xF) + (value & 0xF)) > 0xF)
+    if (((*reg & 0x0F) + (value & 0x0F)) > 0x0F)
     {
         registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
     }
@@ -96,6 +96,27 @@ NUM_CYCLES CPU::opcode0x39()
     return 8;
 } // ADD HL SP
 
+NUM_CYCLES CPU::opcode0xE8()
+{
+    registers.pc += 1;
+    char data = memory->readByte(registers.pc);
+    registers.flags.reset();
+
+    if ((registers.sp & 0x0F) + (data & 0x0F) > 0x0F)
+    {
+        registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
+    }
+
+    if ((registers.sp & 0xFF) + (data & 0xFF) > 0xFF)
+    {
+        registers.flags.raiseFlag(FlagTypes::CARRY);
+    }
+
+    registers.sp += (uint16_t)data;
+    return 16;
+
+} // ADD SP n
+
 NUM_CYCLES CPU::opcode0x81()
 {
     add8bit(&registers.a, registers.c);
@@ -142,10 +163,19 @@ NUM_CYCLES CPU::opcode0xC6()
 // ADC INSTRUCTIONS
 void CPU::adc8bit(REGISTER *reg, uint8_t value)
 {
-    uint8_t carry = registers.flags.carry ? 0x1 : 0x0;
-    uint8_t result = *reg + carry + value;
+    uint8_t carry = registers.flags.getFlag(FlagTypes::CARRY) ? 0b1 : 0b0;
+    uint16_t result = *reg + value + carry;
 
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
+
+    if ((result & 0xFF) == 0)
+    {
+        registers.flags.raiseFlag(FlagTypes::ZERO);
+    }
+    else
+    {
+        registers.flags.lowerFlag(FlagTypes::ZERO);
+    }
 
     if (result > 0xFF)
     {
@@ -156,16 +186,7 @@ void CPU::adc8bit(REGISTER *reg, uint8_t value)
         registers.flags.lowerFlag(FlagTypes::CARRY);
     }
 
-    if (result == 0)
-    {
-        registers.flags.raiseFlag(FlagTypes::ZERO);
-    }
-    else
-    {
-        registers.flags.lowerFlag(FlagTypes::ZERO);
-    }
-
-    if (((*reg & 0xF) + (value & 0xF) + carry) > 0xF)
+    if (((*reg & 0x0F) + (value & 0x0F) + carry) > 0x0F)
     {
         registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
     }
@@ -174,7 +195,7 @@ void CPU::adc8bit(REGISTER *reg, uint8_t value)
         registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
     }
 
-    *reg += result;
+    *reg = result & 0xFF;
 }
 
 NUM_CYCLES CPU::opcode0x8F()
@@ -323,38 +344,28 @@ NUM_CYCLES CPU::opcode0xD6()
 // SBC INSTRUCTIONS
 void CPU::sbc8bit(REGISTER *reg, uint8_t value)
 {
-    uint8_t carry = registers.flags.carry ? 0b1 : 0b0;
-    uint8_t result = *reg - value - carry;
+    int carry = registers.flags.getFlag(FlagTypes::CARRY) ? 1 : 0;
+    int result = *reg - value - carry;
+
+    registers.flags.reset();
+    registers.flags.raiseFlag(FlagTypes::ADDSUB);
+
+    if ((result & 0xFF) == 0)
+    {
+        registers.flags.raiseFlag(FlagTypes::ZERO);
+    }
 
     if (result < 0)
     {
         registers.flags.raiseFlag(FlagTypes::CARRY);
     }
-    else
-    {
-        registers.flags.lowerFlag(FlagTypes::CARRY);
-    }
-    registers.flags.raiseFlag(FlagTypes::ADDSUB);
 
-    if (result == 0)
-    {
-        registers.flags.raiseFlag(FlagTypes::ZERO);
-    }
-    else
-    {
-        registers.flags.lowerFlag(FlagTypes::ZERO);
-    }
-
-    if (((*reg & 0xF) - (value & 0xF) - carry) < 0)
+    if (((*reg & 0x0F) - (value & 0x0F) - carry) < 0)
     {
         registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
     }
-    else
-    {
-        registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
-    }
 
-    *reg -= result;
+    *reg = result & 0xFF;
 }
 
 NUM_CYCLES CPU::opcode0x9F()
@@ -805,7 +816,8 @@ void CPU::dec8bit(REGISTER *reg)
     {
         registers.flags.lowerFlag(FlagTypes::ZERO);
     }
-    if ((*reg & 0x0F) == 0)
+
+    if ((*reg & 0x0F) == 0x0F)
     {
         registers.flags.raiseFlag(FlagTypes::HALF_CARRY);
     }
@@ -897,35 +909,44 @@ NUM_CYCLES CPU::opcode0x3B()
 // DAA INSTRUCTIONS
 NUM_CYCLES CPU::opcode0x27()
 {
-    if (registers.flags.addSubtract)
+    int a = registers.a;
+    if (registers.flags.getFlag(FlagTypes::ADDSUB))
     {
-        if (registers.flags.half_carry)
+        if (registers.flags.getFlag(FlagTypes::HALF_CARRY))
         {
-            registers.a -= 0x06;
+            a = (a - 0x06) & 0xFF;
         }
-        if (registers.flags.carry)
+        if (registers.flags.getFlag(FlagTypes::CARRY))
         {
-            registers.a -= 0x60;
+            a -= 0x60;
         }
-    }
-    else
-    {
-        if ((registers.a & 0x0F) > 0x09 || registers.flags.half_carry)
+    } else {
+        if (registers.flags.getFlag(FlagTypes::HALF_CARRY) || (a & 0x0F) > 9)
         {
-            registers.a += 0x06;
+            a += 0x06;
         }
-        if (registers.a > 0x9F || registers.flags.carry)
+        if (registers.flags.getFlag(FlagTypes::CARRY) || a > 0x9F)
         {
-            registers.a += 0x60;
+            a += 0x60;
         }
     }
 
     registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
-    if (registers.a > 0xFF)
+    registers.flags.lowerFlag(FlagTypes::ZERO);
+
+    if ((a & 0x100) == 0x100)
     {
         registers.flags.raiseFlag(FlagTypes::CARRY);
     }
-    registers.flags.lowerFlag(FlagTypes::ZERO);
+
+    a &= 0xFF;
+
+    if (a == 0)
+    {
+        registers.flags.raiseFlag(FlagTypes::ZERO);
+    }
+
+    registers.a = a;
 
     return 4;
 } // DAA

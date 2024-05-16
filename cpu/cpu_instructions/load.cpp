@@ -642,6 +642,7 @@ NUM_CYCLES CPU::opcode0xE5()
 NUM_CYCLES CPU::opcode0xF1()
 {
     registers.af = pop();
+    registers.f &= 0xF0;
     return 12;
 } // POP AF
 

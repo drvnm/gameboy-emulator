@@ -7,4 +7,5 @@ public:
     bool doStep = false;
     bool doPrint = false;
     bool doTileRender = false;
+    bool incrementPC = false;
 };

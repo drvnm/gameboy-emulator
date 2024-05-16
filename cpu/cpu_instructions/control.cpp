@@ -4,7 +4,14 @@
 
 NUM_CYCLES CPU::opcode0x3F()
 {
-    registers.flags.carry = !registers.flags.carry;
+    if (registers.flags.getFlag(FlagTypes::CARRY))
+    {
+        registers.flags.lowerFlag(FlagTypes::CARRY);
+    }
+    else
+    {
+        registers.flags.raiseFlag(FlagTypes::CARRY);
+    }
     registers.flags.lowerFlag(FlagTypes::ADDSUB);
     registers.flags.lowerFlag(FlagTypes::HALF_CARRY);
     return 1;

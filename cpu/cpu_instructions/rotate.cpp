@@ -23,7 +23,7 @@ NUM_CYCLES CPU::opcode0x17()
     uint8_t bit = registers.a & 0x80;
     registers.a <<= 1;
 
-    if(registers.flags.carry)
+    if(registers.flags.getFlag(FlagTypes::CARRY))
     {
         registers.a = setBit(registers.a, 0);
     } else {
@@ -63,7 +63,7 @@ NUM_CYCLES CPU::opcode0x1F()
     uint8_t bit = registers.a & 0x01;
     registers.a >>= 1;
 
-    if(registers.flags.carry)
+    if(registers.flags.getFlag(FlagTypes::CARRY))
     {
         registers.a = setBit(registers.a, 7);
     } else {
@@ -225,7 +225,7 @@ void CPU::rl8bit(REGISTER *reg)
     uint8_t bit = *reg & 0x80;
     *reg <<= 1;
 
-    if(registers.flags.carry)
+    if(registers.flags.getFlag(FlagTypes::CARRY))
     {
         *reg = setBit(*reg, 0);
     } else {
@@ -300,7 +300,7 @@ void CPU::rr8bit(REGISTER *reg)
     uint8_t bit = *reg & 0x01;
     *reg >>= 1;
 
-    if(registers.flags.carry)
+    if(registers.flags.getFlag(FlagTypes::CARRY))
     {
         *reg = setBit(*reg, 7);
     } else {
@@ -309,7 +309,7 @@ void CPU::rr8bit(REGISTER *reg)
 
     registers.flags.reset();
 
-    if(bit)
+    if(bit == 1)
     {
         registers.flags.raiseFlag(FlagTypes::CARRY);
     }

@@ -129,15 +129,15 @@ void Display::update(uint8_t cycles)
     }
     else
     {
-        // std::cout << "LCD is not enabled" << std::endl;
+        // memory->map[0xFF44] = 0;
         return;
     }
-    if (scanlineCounter <= 0) 
+    if (scanlineCounter <= 0)
     {
         // move to the next scanline
         memory->map[0xFF44]++;
         uint8_t currentScanline = memory->readByte(0xFF44);
-        scanlineCounter = 0;
+        scanlineCounter = 456;
         if (currentScanline == 144)
         {
             renderCurrentFrame();
@@ -178,8 +178,8 @@ void Display::drawScanLine()
 
     if (bitIsSet(lcdc, 1))
     {
-        drawSprites();
-        std::cout << "Drawing sprites" << std::endl;
+        // drawSprites();
+        // std::cout << "Drawing sprites" << std::endl;
     }
     else
     {
@@ -271,7 +271,69 @@ void Display::drawPixelTile(int x, int y, RGB color)
 
 void Display::drawSprites()
 {
-    std::cout << "Drawing sprites" << std::endl;
+    // std::cout << "Drawing sprites not fully right" << std::endl;
+    uint8_t lcdc = memory->readByte(0xFF40);
+    bool use8x16 = bitIsSet(lcdc, 2);
+    for (int sprite = 0; sprite < 40; sprite++)
+    {
+        uint16_t spriteAddress = 0xFE00 + (sprite * 4);
+        uint8_t yPos = memory->readByte(spriteAddress) - 16;
+        uint8_t xPos = memory->readByte(spriteAddress + 1) - 8;
+        uint8_t tileLocation = memory->readByte(spriteAddress + 2);
+        uint8_t attributes = memory->readByte(spriteAddress + 3);
+
+        bool yFlip = bitIsSet(attributes, 6);
+        bool xFlip = bitIsSet(attributes, 5);
+        bool priority = bitIsSet(attributes, 7);
+        int scanline = memory->readByte(0xFF44);
+
+        int ysize = use8x16 ? 16 : 8;
+        if (scanline >= yPos && scanline < (yPos + ysize))
+        {
+            int line = scanline - yPos;
+            if (yFlip)
+            {
+                line -= ysize;
+                line *= -1;
+            }
+            line *= 2;
+            uint16_t dataAddress = 0x8000 + (tileLocation * 16) + line;
+            uint8_t data1 = memory->readByte(dataAddress);
+            uint8_t data2 = memory->readByte(dataAddress + 1);
+
+            for (int tilePixel = 7; tilePixel >= 0; tilePixel--)
+            {
+                int colorBit = tilePixel;
+                if (xFlip)
+                {
+                    colorBit -= 7;
+                    colorBit *= -1;
+                }
+                int colorNum = (data2 >> colorBit) & 0x1;
+                colorNum <<= 1;
+                colorNum |= (data1 >> colorBit) & 0x1;
+                RGB color = CLASSIC_PALLETE[colorNum];
+                if (colorNum == 0)
+                {
+                    continue;
+                }
+                int pixel = xPos + 7 - tilePixel;
+                if (scanline < 0 || scanline >= SCREEN_HEIGHT || pixel < 0 || pixel >= SCREEN_WIDTH)
+                {
+                    continue;
+                }
+                if (priority && pixels[(scanline * 160) + pixel].red != 0)
+                {
+                    continue;
+                }
+                pixels[(scanline * 160) + pixel] = color;
+
+                // drawPixel(pixel, scanline, color);
+            }
+
+            // draw the sprite
+        }
+    }
 }
 
 void Display::clear()

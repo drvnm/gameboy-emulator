@@ -61,6 +61,7 @@ struct Registers
 
     struct flags
     {
+        uint8_t* f;
         // zf in documentation
         bool zero;
         // n in documentation
@@ -72,6 +73,7 @@ struct Registers
 
         void raiseFlag(enum FlagTypes flag);
         void lowerFlag(enum FlagTypes flag);
+        bool getFlag(enum FlagTypes flag);
         void reset();
 
     } flags;

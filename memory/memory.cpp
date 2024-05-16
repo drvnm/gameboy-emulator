@@ -10,10 +10,6 @@ Memory::Memory(Cartridge *cartridge, Debugger *debugger)
     for (size_t i = 0; i < cartridge->rom.size(); i++)
     {
         map[i] = cartridge->rom[i];
-        if(i > 0x8000) 
-        {
-            std::cout << "rom[" << i << "]: " << (int)map[i] << std::endl;
-        }
     }
 }
 
@@ -67,8 +63,7 @@ void Memory::writeByte(uint16_t address, uint8_t value)
         {
             map[0xFE00 + i] = map[(value << 8) + i];
         }
-    }
-    else if(address == 0xFF44) // LY
+    } else if (address == 0xff44) // reset scanline
     {
         map[address] = 0;
     }

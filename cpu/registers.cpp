@@ -125,20 +125,26 @@ void Registers::flags::raiseFlag(enum FlagTypes flag)
     {
         case FlagTypes::ZERO:
             zero = true;
+            *f = *f | 0b10000000;
             break;
         case FlagTypes::CARRY:
             carry = true;
+            *f = *f | 0b00010000;
             break;
         case FlagTypes::HALF_CARRY:
             half_carry = true;
+            *f = *f | 0b00100000;
             break;
         case FlagTypes::ADDSUB:
             addSubtract = true;
+            *f = *f | 0b01000000;
             break;
         default:
             std::invalid_argument("Invalid flag type");
             break;
     }
+    // lower the lower 4 bits of the flag register
+    *f = *f & 0b11110000;
 }
 
 void Registers::flags::lowerFlag(enum FlagTypes flag)
@@ -147,24 +153,50 @@ void Registers::flags::lowerFlag(enum FlagTypes flag)
     {
         case FlagTypes::ZERO:
             zero = false;
+            *f = *f & 0b01111111;
             break;
         case FlagTypes::CARRY:
             carry = false;
+            *f = *f & 0b11101111;
             break;
         case FlagTypes::HALF_CARRY:
             half_carry = false;
+            *f = *f & 0b11011111;
             break;
         case FlagTypes::ADDSUB:
             addSubtract = false;
+            *f = *f & 0b10111111;
             break;
         default:
             std::invalid_argument("Invalid flag type");
             break;
     }
+    // lower the lower 4 bits of the flag register
+    *f = *f & 0b11110000;
+}
+
+bool Registers::flags::getFlag(enum FlagTypes flag)
+{
+   // checks f bitwise
+    switch (flag)
+    {
+        case FlagTypes::ZERO:
+            return *f & 0b10000000;
+        case FlagTypes::CARRY:
+            return *f & 0b00010000;
+        case FlagTypes::HALF_CARRY:
+            return *f & 0b00100000;
+        case FlagTypes::ADDSUB:
+            return *f & 0b01000000;
+        default:
+            std::invalid_argument("Invalid flag type");
+            return false;
+    }
 }
 
 void Registers::flags::reset()
 {
+    *f = 0x00;
     zero = false;
     carry = false;
     half_carry = false;
