@@ -1,10 +1,11 @@
 #include <iostream>
 
 #include "cpu.h"
+#include "../memory/memory.h"
 
-#define REQUIRE(condition, message) \
-    if (!(condition))               \
-    {                               \
+#define REQUIRE(condition, message)        \
+    if (!(condition))                      \
+    {                                      \
         std::cerr << message << std::endl; \
         throw std::runtime_error(message); \
     }
@@ -19,6 +20,7 @@ CPU::CPU(Memory *memory, Debugger *debugger)
 
 void CPU::reset()
 {
+    
 }
 
 void CPU::requestInterrupt(uint8_t interrupt)
@@ -30,6 +32,7 @@ void CPU::requestInterrupt(uint8_t interrupt)
 
 void CPU::serviceInterrupt(uint8_t interrupt)
 {
+    halted = false;
     registers.ime = false;
     uint8_t interruptFlag = memory->readByte(0xFF0F);
     interruptFlag = clearBit(interruptFlag, interrupt);
@@ -60,12 +63,14 @@ void CPU::serviceInterrupt(uint8_t interrupt)
 
 void CPU::handleInterrupts()
 {
-    if (!registers.ime)
-        return;
     uint8_t interruptFlag = memory->readByte(0xFF0F);
     uint8_t interruptEnable = memory->readByte(0xFFFF);
 
-    if (interruptFlag == 0)
+    if (interruptFlag <= 0) {
+        if(halted) halted = false;
+        return;
+    }
+    if (!registers.ime)
         return;
     for (int i = 0; i < 5; i++)
     {
@@ -73,7 +78,6 @@ void CPU::handleInterrupts()
         {
             if (bitIsSet(interruptEnable, i))
             {
-                std::cout << "Servicing interrupt: " << i << std::endl;
                 serviceInterrupt(i);
             }
         }
@@ -770,7 +774,8 @@ void CPU::runJSONtests(nlohmann::json_abi_v3_11_3::json tests)
         auto cycles = test["cycles"];
         for (auto &cycle : cycles)
         {
-            if(std::string(cycle[2]).at(0) == 'r') memory->writeByte(cycle[0], cycle[1]);
+            if (std::string(cycle[2]).at(0) == 'r')
+                memory->writeByte(cycle[0], cycle[1]);
             // if(std::string(test["name"]) == "F0 021E") {
             //     // read memory
             //     std::cout << "Reading memory at: " << cycle[0] << " Value: " << (int)memory->readByte(cycle[0]) << std::endl;
@@ -782,7 +787,9 @@ void CPU::runJSONtests(nlohmann::json_abi_v3_11_3::json tests)
         {
             std::cout << "Failed test: " << test["name"] << " PC" << std::endl;
             std::cout << "Expected: " << finalStates["pc"] << " Got: " << registers.pc << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " PC: " << registers.pc << " Expected: " << finalStates["pc"] << std::endl;
         }
         if (registers.sp != finalStates["sp"])
@@ -790,63 +797,80 @@ void CPU::runJSONtests(nlohmann::json_abi_v3_11_3::json tests)
             std::cout << "Failed test: " << test["name"] << " SP" << std::endl;
             std::cout << "Expected: " << finalStates["sp"] << " Got: " << registers.sp << std::endl;
         }
-        else {
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " SP: " << registers.sp << " Expected: " << finalStates["sp"] << std::endl;
         }
         if (registers.a != finalStates["a"])
         {
             std::cout << "Failed test: " << test["name"] << " A" << std::endl;
             std::cout << "Expected: " << finalStates["a"] << " Got: " << (int)registers.a << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " A: " << (int)registers.a << " Expected: " << finalStates["a"] << std::endl;
         }
         if (registers.b != finalStates["b"])
         {
             std::cout << "Failed test: " << test["name"] << " B" << std::endl;
             std::cout << "Expected: " << finalStates["b"] << " Got: " << (int)registers.b << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " B: " << (int)registers.b << " Expected: " << finalStates["b"] << std::endl;
         }
         if (registers.c != finalStates["c"])
         {
             std::cout << "Failed test: " << test["name"] << " C" << std::endl;
             std::cout << "Expected: " << finalStates["c"] << " Got: " << (int)registers.c << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " C: " << (int)registers.c << " Expected: " << finalStates["c"] << std::endl;
         }
         if (registers.d != finalStates["d"])
         {
             std::cout << "Failed test: " << test["name"] << " D" << std::endl;
             std::cout << "Expected: " << finalStates["d"] << " Got: " << (int)registers.d << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " D: " << (int)registers.d << " Expected: " << finalStates["d"] << std::endl;
         }
         if (registers.e != finalStates["e"])
         {
             std::cout << "Failed test: " << test["name"] << " E" << std::endl;
             std::cout << "Expected: " << finalStates["e"] << " Got: " << (int)registers.e << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " E: " << (int)registers.e << " Expected: " << finalStates["e"] << std::endl;
         }
         if (registers.f != finalStates["f"])
         {
             std::cout << "Failed test: " << test["name"] << " F" << std::endl;
             std::cout << "Expected: " << finalStates["f"] << " Got: " << (int)registers.f << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " F: " << (int)registers.f << " Expected: " << finalStates["f"] << std::endl;
         }
         if (registers.h != finalStates["h"])
         {
             std::cout << "Failed test: " << test["name"] << " H" << std::endl;
             std::cout << "Expected: " << finalStates["h"] << " Got: " << (int)registers.h << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " H: " << (int)registers.h << " Expected: " << finalStates["h"] << std::endl;
         }
         if (registers.l != finalStates["l"])
         {
             std::cout << "Failed test: " << test["name"] << " L" << std::endl;
             std::cout << "Expected: " << finalStates["l"] << " Got: " << (int)registers.l << std::endl;
-        } else {
+        }
+        else
+        {
             // std::cout << "Passed test: " << test["name"] << " L: " << (int)registers.l << " Expected: " << finalStates["l"] << std::endl;
         }
         auto finalRamState = finalStates["ram"];
@@ -860,12 +884,77 @@ void CPU::runJSONtests(nlohmann::json_abi_v3_11_3::json tests)
             {
                 std::cout << "Failed test: " << test["name"] << " RAM" << std::endl;
                 std::cout << "Expected: " << ramState[1] << " Got: " << (int)memory->readByte(ramState[0]) << std::endl;
-            } else {
+            }
+            else
+            {
                 // std::cout << "Passed test: " << test["name"] << " RAM: " << (int)memory->readByte(ramState[0]) << " Expected: " << ramState[1] << std::endl;
             }
         }
+    }
+}
 
-      
+bool CPU::clockIsEnabled()
+{
+    return bitIsSet(memory->readByte(TMC), 2);
+}
 
+uint8_t CPU::readClockFrequency()
+{
+    return memory->readByte(TMC) & 0x3;
+}
+
+void CPU::setClockFrequency()
+{
+    uint8_t clockFrequency = readClockFrequency();
+    switch (clockFrequency)
+    {
+    case 0:
+        timerCounter = 1024;
+        break;
+    case 1:
+        timerCounter = 16;
+        break;
+    case 2:
+        timerCounter = 64;
+        break;
+    case 3:
+        timerCounter = 256;
+        break;
+    }
+}
+
+void CPU::updateTimers(int cycles)
+{
+    doDividerRegister(cycles);
+
+    if (clockIsEnabled())
+    {
+        timerCounter -= cycles;
+
+        if (timerCounter <= 0)
+        {
+            setClockFrequency();
+
+            // if timer is about to overflow
+            if (memory->readByte(TIMA) == 0xFF)
+            {
+                memory->writeByte(TIMA, memory->readByte(TMA)); // reload the timer
+                requestInterrupt(2);
+            }
+            else
+            {
+                memory->writeByte(TIMA, memory->readByte(TIMA) + 1); // increment the timer
+            }
+        }
+    }
+}
+
+void CPU::doDividerRegister(int cycles)
+{
+    divReg += cycles;
+    if (divCounter >= 255)
+    {
+        divCounter = 0;
+        memory->map[0xFF04]++;
     }
 }

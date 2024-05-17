@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
         Cartridge *cartridge = new Cartridge(argv[1], debugger);
         Memory *memory = new Memory(cartridge, debugger);
         CPU *cpu = new CPU(memory, debugger);
+        memory->setCPU(cpu);
         // hihihihi dirty hack cause im lazy
         cpu->registers.flags.f = &cpu->registers.f;
         Display *display = new Display(memory, cpu, debugger);

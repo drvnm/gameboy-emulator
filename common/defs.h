@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstdint>
-
+#define TIMA 0xFF05
+#define TMA 0xFF06
+#define TMC 0xFF07
+#define CLOCKSPEED 4194304 ;
 
 enum RegisterTypes
 {

@@ -1,4 +1,6 @@
 #include "../CPU.h"
+#include "../../memory/memory.h"
+
 
 NUM_CYCLES CPU::opcode0x07()
 {

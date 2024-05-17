@@ -1,5 +1,6 @@
 #include "../cpu.h"
 #include "../../common/defs.h"
+#include "../../memory/memory.h"
 
 #include <iostream>
 

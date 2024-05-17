@@ -27,10 +27,16 @@ void Emulator::run()
         {
             current = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration<float, std::milli>(current - previous);
-            uint8_t cycles = cpu->step();
-            display->update(cycles);
+            if (!cpu->halted)
+            {
+                uint8_t cycles = cpu->step();
+                display->update(cycles);
+                cpu->updateTimers(cycles);
+            } else {
+                std::cout << "HALTED" << std::endl;
+            }
+            cpu->handleInterrupts();
         }
-        // cpu->handleInterrupts();
 
         // if (elapsed.count() < DELAY_TIME)
         // {
@@ -59,7 +65,7 @@ void Emulator::run()
                 {
                     debugger->doPause = !debugger->doPause;
                 }
-            } 
+            }
             if (e.type == SDL_KEYDOWN)
             {
                 if (e.key.keysym.sym == SDLK_2)

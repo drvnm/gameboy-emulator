@@ -4,16 +4,17 @@
 #include <map>
 
 #include "registers.h"
-#include "../memory/memory.h"
 #include "../debugger/debugger.h"
 #include "../libs/json.hpp"
 
-
 // emulates the CPU of the gameboy (the sharp LR35902)
+class Memory;
+
 class CPU
 {
 public:
     // display stuff
+    bool halted = false;
     Memory *memory;
     Debugger *debugger;
     short (CPU::*opcodes[0xFF + 1])();         // array of function pointers to the opcodes
@@ -163,8 +164,6 @@ public:
     NUM_CYCLES opcode0x29(); // ADD HL, HL
     NUM_CYCLES opcode0x39(); // ADD HL, SP
     NUM_CYCLES opcode0xE8(); // ADD SP, NUMBER
-
-
 
     // ADC INSTRUCTIONS
     void adc8bit(REGISTER *reg, uint8_t value);
@@ -616,6 +615,14 @@ public:
     NUM_CYCLES extendedOpcode0xBE(); // RES 7, (HL)
 
     // STOP INSTRUCTIONS
+    int timerCounter;
+    int divCounter;
+    int divReg;
+    void doDividerRegister(int cycles);
+    bool clockIsEnabled();
+    uint8_t readClockFrequency();
+    void setClockFrequency();
+    void updateTimers(int cycles);
     uint8_t step();
     CPU(Memory *memory, Debugger *debugger);
     void runJSONtests(nlohmann::json_abi_v3_11_3::json tests);

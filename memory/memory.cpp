@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "../cpu/cpu.h"
 #include <iostream>
 
 Memory::Memory(Cartridge *cartridge, Debugger *debugger)
@@ -11,6 +12,11 @@ Memory::Memory(Cartridge *cartridge, Debugger *debugger)
     {
         map[i] = cartridge->rom[i];
     }
+}
+
+void Memory::setCPU(CPU *cpu)
+{
+    this->cpu = cpu;
 }
 
 void Memory::reset()
@@ -63,10 +69,25 @@ void Memory::writeByte(uint16_t address, uint8_t value)
         {
             map[0xFE00 + i] = map[(value << 8) + i];
         }
-    } else if (address == 0xff44) // reset scanline
-    {
-        map[address] = 0;
     }
+    else if (address == TMC)
+    {
+        uint8_t currentfreq = cpu->readClockFrequency();
+        map[address] = value;
+        uint8_t newfreq = cpu->readClockFrequency();
+        if (currentfreq != newfreq)
+        {
+            cpu->setClockFrequency();
+        }
+    }
+    // else if (address == 0xFF44)
+    // {
+    //     map[address] = 0;
+    // }
+    // else if (address == 0xFF00)
+    // {
+    //     map[address] = 1;
+    // }
     else
     {
 

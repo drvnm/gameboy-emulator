@@ -1,6 +1,8 @@
 import subprocess
+import multiprocessing
 
 def run_a_exe(arg):
+    print(f"Running a.exe with argument {arg}")
     try:
         result = subprocess.run(['a.exe', arg], capture_output=True, text=True)
         if "Expected" in result.stdout:
@@ -9,15 +11,22 @@ def run_a_exe(arg):
     except Exception as e:
         print(f"An error occurred while running a.exe with argument {arg}: {e}")
 
-ignored_codes = [0x10, 0x10]
+ignored_codes = []
 
-def main():
-    for i in range(0x86, 0x100):
-        hex_value = f"{i:02X}"
-        arg = f"..\\sm83\\v1\\CB {hex_value}.json"
-        if i not in ignored_codes:
-            print(f"Running a.exe with argument {arg}")
-            run_a_exe(arg)
-
+def run_tests():
+    cmds = []
+    for i in range(0X00, 0x100):
+        hex_value = f"CB {i:02X}"
+        arg = f"..\\sm83\\v1\\{hex_value}.json"
+    
+        cmds.append(arg)
+        
+    with multiprocessing.Pool() as pool:
+        pool.map(run_a_exe, cmds)
+        
+        
+    
+    
+    
 if __name__ == "__main__":
-    main()
+    run_tests()

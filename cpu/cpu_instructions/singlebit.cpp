@@ -1,4 +1,6 @@
 #include "../CPU.h"
+#include "../../memory/memory.h"
+
 
 ////////////////////////////////////////// BIT
 

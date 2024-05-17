@@ -1,5 +1,7 @@
 #include "../cpu.h"
 #include "../../common/defs.h"
+#include "../../memory/memory.h"
+
 #include <iostream>
 
 void CPU::load8bit(REGISTER *reg, uint8_t value)
@@ -484,15 +486,15 @@ NUM_CYCLES CPU::opcode0xEA()
 
 NUM_CYCLES CPU::opcode0xF0()
 {
-    load8bit(&registers.a, memory->readByte(0xFF00 + memory->readByte(registers.pc + 1)));
     registers.pc += 1;
+    load8bit(&registers.a, memory->readByte(0xFF00 + memory->readByte(registers.pc)));
     return 12;
 } // LD A, (C) (0xFF00 + n)
 
 NUM_CYCLES CPU::opcode0xE0()
 {
-    memory->writeByte(0xFF00 + memory->readByte(registers.pc + 1), registers.a);
     registers.pc += 1;
+    memory->writeByte(0xFF00 + memory->readByte(registers.pc), registers.a);
     return 12;
 } // LD (C), A (0xFF00 + n)
 

@@ -1,5 +1,7 @@
 #include "../cpu.h"
 #include "../../common/defs.h"
+#include "../../memory/memory.h"
+
 #include <stdexcept>
 
 NUM_CYCLES CPU::opcode0x3F()
@@ -32,13 +34,12 @@ NUM_CYCLES CPU::opcode0x00()
 
 NUM_CYCLES CPU::opcode0x76()
 {
-    throw std::runtime_error("HALT instruction not implemented");
+    halted = true;
     return 1;
 } // HALT
 
 NUM_CYCLES CPU::opcode0x10()
 {
-    registers.pc += 1;
     return 1;
 } // STOP
 
