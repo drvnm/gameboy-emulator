@@ -3,7 +3,7 @@
 
 RGB Display::CLASSIC_PALLETE[4] = {{155, 188, 15}, {139, 172, 15}, {48, 98, 48}, {15, 56, 15}};
 RGB Display::GREY_PALLETE[4] = {{255, 255, 255}, {0xCC, 0xCC, 0xCC}, {0x77, 0x77, 0x77}, {0x0, 0x0, 0x0}};
-
+RGB Display::CHILL_PALLETE[4] = {{ 0x9B, 0xBC, 0x0F }, { 0x8B, 0xAC, 0x0F }, { 0x30, 0x62, 0x30 }, { 0x0F, 0x38, 0x0F }};
 Display::Display(Memory *memory, CPU *cpu, Debugger *debugger)
 {
     this->memory = memory;
@@ -11,7 +11,7 @@ Display::Display(Memory *memory, CPU *cpu, Debugger *debugger)
     this->debugger = debugger;
     SDL_Init(SDL_INIT_EVERYTHING);
     std::cout << "SDL Initialized" << std::endl;
-    window = SDL_CreateWindow("VENUM Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("VENULATOR", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3, SDL_WINDOW_SHOWN);
     tileWindow = SDL_CreateWindow("Tile Viewer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, TILE_SCREEN_WIDTH * 3, TILE_SCREEN_HEIGHT * 3, SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     tileRenderer = SDL_CreateRenderer(tileWindow, -1, SDL_RENDERER_ACCELERATED);
@@ -151,7 +151,7 @@ void Display::update(uint8_t cycles)
             cpu->requestInterrupt(0);
             // set the vblank interrupt
 
-            memory->writeByte(0xFF0F, memory->readByte(0xFF0F) | 0x01); 
+            memory->writeByte(0xFF0F, memory->readByte(0xFF0F) | 0x01);
         }
         else if (currentScanline > 153)
         {
@@ -176,7 +176,7 @@ void Display::drawScanLine()
 
     if (bitIsSet(lcdc, 1))
     {
-        // drawSprites();
+        drawSprites();
         // std::cout << "Drawing sprites" << std::endl;
     }
     else
@@ -205,9 +205,10 @@ void Display::drawBackground()
     for (int pixel = 0; pixel < 160; pixel++)
     {
         uint8_t xPos = pixel + scrollX;
-        uint16_t tileCol = xPos / 8;
+        uint16_t tileCol = xPos / 8; // this moves us to the correct tile in the row
         uint16_t tileNum;
         uint16_t tileAddress = backgroundMemory + tileRow + tileCol; // address of the tile number
+
         if (unsig)
         {
             tileNum = memory->readByte(tileAddress);
@@ -215,18 +216,19 @@ void Display::drawBackground()
         else
         {
             int8_t signedTileNum = (int8_t)memory->readByte(tileAddress);
-            tileNum = 256 + signedTileNum;
+            tileNum = signedTileNum + 128;
         }
-        uint16_t tileLocation = tileData + (tileNum * 16);                // this gets the start of the tile data
-        uint8_t line = yPos % 8;                                          // the line of the tile we are on
-        uint16_t data1 = memory->readByte(tileLocation + (line * 2));     // get the first byte of the tile data
-        uint16_t data2 = memory->readByte(tileLocation + (line * 2) + 1); // get the second byte of the tile data
 
-        int colorBit = xPos % 8;                        // the bit of the tile we are on
-        int colorNum = (data2 >> (7 - colorBit)) & 0x1; // get the color number
-        colorNum <<= 1;                                 // shift the color number to the left by 1
-        colorNum |= (data1 >> (7 - colorBit)) & 0x1;    // get the color number
-        RGB color = CLASSIC_PALLETE[colorNum];
+        uint16_t tileLocation = tileData + (tileNum * 16); // each tile is 16 bytes long
+        uint8_t line = (yPos % 8);                         // the line of the tile we are on
+
+        uint16_t data1 = memory->readByte(tileLocation + line * 2);
+        uint16_t data2 = memory->readByte(tileLocation + line * 2 + 1);
+
+        int colorBit = 7 - (xPos % 8); // the x position of the pixel in the tile
+        int colorNum = ((data2 & (1 << colorBit)) ? 1 : 0) << 1;
+        colorNum |= (data1 & (1 << colorBit)) ? 1 : 0;
+        RGB color = CHILL_PALLETE[colorNum];
         pixels[(scanline * 160) + pixel] = color;
     }
 }
@@ -269,7 +271,63 @@ void Display::drawPixelTile(int x, int y, RGB color)
 
 void Display::drawSprites()
 {
-   
+    uint8_t lcdc = memory->readByte(0xFF40);
+    bool use8x16 = bitIsSet(lcdc, 2);
+    for (int sprite = 0; sprite < 40; sprite++)
+    {
+        uint16_t spriteAddress = 0xFE00 + (sprite * 4);
+        uint8_t yPos = memory->readByte(spriteAddress) - 16;
+        uint8_t xPos = memory->readByte(spriteAddress + 1) - 8;
+        uint8_t tileLocation = memory->readByte(spriteAddress + 2);
+        uint8_t attributes = memory->readByte(spriteAddress + 3);
+
+        bool yFlip = bitIsSet(attributes, 6);
+        bool xFlip = bitIsSet(attributes, 5);
+        bool priority = bitIsSet(attributes, 7);
+        int scanline = memory->readByte(0xFF44);
+
+        int ysize = use8x16 ? 16 : 8;
+        if (scanline >= yPos && scanline < (yPos + ysize))
+        {
+            int line = scanline - yPos;
+            if (yFlip)
+            {
+                line -= ysize;
+                line *= -1;
+            }
+            line *= 2;
+            uint16_t dataAddress = 0x8000 + (tileLocation * 16) + line;
+            uint8_t data1 = memory->readByte(dataAddress);
+            uint8_t data2 = memory->readByte(dataAddress + 1);
+            for (int tilePixel = 7; tilePixel >= 0; tilePixel--)
+            {
+                int colorBit = tilePixel;
+                if (xFlip)
+                {
+                    colorBit -= 7;
+                    colorBit *= -1;
+                }
+                int colorNum = ((data2 & (1 << colorBit)) ? 1 : 0) << 1;
+                colorNum |= (data1 & (1 << colorBit)) ? 1 : 0;
+                RGB color = CHILL_PALLETE[colorNum];
+                if (colorNum == 0)
+                {
+                    continue;
+                }
+                int pixel = 7 - tilePixel;
+                int xPix = xPos + pixel;
+                if (scanline < 0 || scanline >= 144 || xPix < 0 || xPix >= 160)
+                {
+                    continue;
+                }
+                if (priority && pixels[(scanline * 160) + xPix].red != 0)
+                {
+                    continue;
+                }
+                pixels[(scanline * 160) + xPix] = color;
+            }
+        }
+    }
 }
 
 void Display::clear()

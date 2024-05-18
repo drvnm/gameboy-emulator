@@ -13,7 +13,7 @@ void Registers::reset()
     de = 0x00D8;
     hl = 0x014D;
     sp = 0xFFFE;
-    pc = 0x0100;
+    pc = 0x0000;
 
     flags.zero = false;
     flags.addSubtract = false;

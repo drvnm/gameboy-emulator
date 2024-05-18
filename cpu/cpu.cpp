@@ -20,7 +20,6 @@ CPU::CPU(Memory *memory, Debugger *debugger)
 
 void CPU::reset()
 {
-    
 }
 
 void CPU::requestInterrupt(uint8_t interrupt)
@@ -66,8 +65,10 @@ void CPU::handleInterrupts()
     uint8_t interruptFlag = memory->readByte(0xFF0F);
     uint8_t interruptEnable = memory->readByte(0xFFFF);
 
-    if (interruptFlag <= 0) {
-        if(halted) halted = false;
+    if (interruptFlag <= 0)
+    {
+        if (halted)
+            halted = false;
         return;
     }
     if (!registers.ime)
@@ -957,4 +958,65 @@ void CPU::doDividerRegister(int cycles)
         divCounter = 0;
         memory->map[0xFF04]++;
     }
+}
+
+// joypad functions
+void CPU::keyPressed(uint8_t key)
+{
+    std::cout << "Key pressed: " << (int)key << std::endl;
+    bool previouslyUnset = false;
+
+    // if its the first press
+    if (bitIsSet(joypadState, key) == false)
+        previouslyUnset = true;
+
+    joypadState = clearBit(joypadState, key); // 0 is pressed
+    bool button = true;
+
+    // is this a standard button or a directional button?
+    if (key > 3)
+        button = true;
+    else // directional button pressed
+        button = false;
+
+    uint8_t keyReq = memory->map[0xFF00];
+    bool requestInterupt = false;
+
+    // only request interupt if the button just pressed is
+    // the style of button the game is interested in
+    if (button && !bitIsSet(keyReq, 5))
+        requestInterupt = true;
+
+    // same as above but for directional button
+    else if (!button && !bitIsSet(keyReq, 4))
+        requestInterupt = true;
+
+    // request interupt
+    if (requestInterupt && !previouslyUnset)
+        requestInterrupt(4);
+
+    
+}
+
+void CPU::keyReleased(uint8_t key)
+{
+    std::cout << "Key released: " << (int)key << std::endl;
+    joypadState = setBit(joypadState, key); // 1 is released
+}
+
+uint8_t CPU::getJoypadState()
+{
+    uint8_t keyReq = memory->map[0xFF00];
+    uint8_t result = 0xFF;
+
+    if (!bitIsSet(keyReq, 4))
+    {
+        result &= joypadState;
+    }
+    else if (!bitIsSet(keyReq, 5))
+    {
+        result &= joypadState >> 4;
+    }
+
+    return result;
 }

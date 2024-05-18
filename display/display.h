@@ -40,6 +40,7 @@ private:
     Debugger *debugger;
     static RGB CLASSIC_PALLETE[4];
     static RGB GREY_PALLETE[4];
+    static RGB CHILL_PALLETE[4]; // This pallete has chill colors, like light grey, light green, black and grey
     RGB pixels[SCREEN_HEIGHT * SCREEN_WIDTH] = {0};  // mirror 2d array of pixels
     SDL_Window *window;
     SDL_Window *tileWindow;

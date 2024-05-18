@@ -63,14 +63,25 @@ void Emulator::run()
             {
                 if (e.key.keysym.sym == SDLK_1)
                 {
-                    debugger->doPause = !debugger->doPause;
+                    // debugger->doPause = !debugger->doPause;
+                    
+                }
+                // from 1 to 9, set the cpu->keyPressed to the key pressed
+                if (e.key.keysym.sym >= SDLK_1 && e.key.keysym.sym <= SDLK_9)
+                {
+                    cpu->keyPressed(std::stoi(SDL_GetKeyName(e.key.keysym.sym)));
                 }
             }
-            if (e.type == SDL_KEYDOWN)
+            if (e.type == SDL_KEYUP)
             {
                 if (e.key.keysym.sym == SDLK_2)
                 {
-                    debugger->doPrint = !debugger->doPrint;
+                    // debugger->doPrint = !debugger->doPrint;
+                }
+                // from 1 to 9, set the cpu->keyPressed to the key pressed
+                if (e.key.keysym.sym >= SDLK_1 && e.key.keysym.sym <= SDLK_9)
+                {
+                    cpu->keyReleased(std::stoi(SDL_GetKeyName(e.key.keysym.sym)));
                 }
             }
             if (e.type == SDL_KEYDOWN)
@@ -78,6 +89,7 @@ void Emulator::run()
                 if (e.key.keysym.sym == SDLK_3)
                 {
                     debugger->doTileRender = true;
+                     
                 }
             }
         }

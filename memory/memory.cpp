@@ -57,6 +57,9 @@ void Memory::reset()
 
 uint8_t Memory::readByte(uint16_t address)
 {
+    if(address == 0xFF00) {
+        return cpu->getJoypadState();
+    }
     return map[address];
 }
 

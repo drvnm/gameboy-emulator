@@ -626,4 +626,10 @@ public:
     uint8_t step();
     CPU(Memory *memory, Debugger *debugger);
     void runJSONtests(nlohmann::json_abi_v3_11_3::json tests);
+
+    // JOYPAD STUFF
+    uint8_t joypadState;
+    void keyPressed(uint8_t key);
+    void keyReleased(uint8_t key);
+    uint8_t getJoypadState();
 };
