@@ -41,19 +41,19 @@ void CPU::serviceInterrupt(uint8_t interrupt)
     switch (interrupt)
     {
     case 0:
-        registers.pc = 0x40;
+        registers.pc = 0x40; // V-Blank
         break;
     case 1:
-        registers.pc = 0x48;
+        registers.pc = 0x48; // LCD STAT
         break;
     case 2:
-        registers.pc = 0x50;
+        registers.pc = 0x50; // Timer
         break;
     case 3:
-        registers.pc = 0x58;
+        registers.pc = 0x58; // V-Blank
         break;
     case 4:
-        registers.pc = 0x60;
+        registers.pc = 0x60; // Joypad
         break;
     default:
         break;
@@ -87,7 +87,7 @@ void CPU::handleInterrupts()
 
 uint8_t CPU::step()
 {
-    OPCODE opcode = memory->readByte(registers.pc);
+    OPCODE opcode = memory->readDirect(registers.pc);
     uint8_t cycles = executeInstruction(opcode);
     registers.pc += 1;
     return cycles;
@@ -95,9 +95,25 @@ uint8_t CPU::step()
 
 uint8_t CPU::executeInstruction(OPCODE opcode)
 {
+    // if the opcode == 1fff, print the few opcodes before and after in hex
+    // if (registers.pc == 0x1FFF)
+    // {
+    //     std::cout << "Opcode: " << std::hex << (int)opcode << std::endl;
+    //     for (int i = -5; i < 5; i++)
+    //     {
+    //         std::cout << "Opcode: " << std::hex << (int)memory->readDirect(registers.pc + i) << " at address: " << std::hex << registers.pc + i << std::endl;
+    //     }
+
+    //     for (int i = 0; i < 5; i++)
+    //     {
+    //         std::cout << "Opcode: " << std::hex << (int)memory->readDirect(registers.pc + i) << " at address: " << std::hex << registers.pc + i << std::endl;
+    //     }
+    // }
+
+
     if (opcode == 0xCB)
     {
-        OPCODE extendedOpcode = memory->readByte(registers.pc + 1);
+        OPCODE extendedOpcode = memory->readDirect(registers.pc + 1);
         if (extendedOpcodes[extendedOpcode] != nullptr)
         {
             // read instruction from opcode table
@@ -769,14 +785,15 @@ void CPU::runJSONtests(nlohmann::json_abi_v3_11_3::json tests)
         auto ramStates = initialStates["ram"];
         for (auto &ramState : ramStates)
         {
-            memory->writeByte(ramState[0], ramState[1]);
+            memory->writeDirect(ramState[0], ramState[1]);
         }
 
         auto cycles = test["cycles"];
         for (auto &cycle : cycles)
         {
-            if (std::string(cycle[2]).at(0) == 'r')
-                memory->writeByte(cycle[0], cycle[1]);
+            if (std::string(cycle[2]).at(0) == 'r') {
+                memory->writeDirect(cycle[0], cycle[1]);
+            }
             // if(std::string(test["name"]) == "F0 021E") {
             //     // read memory
             //     std::cout << "Reading memory at: " << cycle[0] << " Value: " << (int)memory->readByte(cycle[0]) << std::endl;
@@ -881,10 +898,10 @@ void CPU::runJSONtests(nlohmann::json_abi_v3_11_3::json tests)
             //     // read memory
             //     std::cout << "Reading memory at: " << ramState[0] << " Value: " << (int)memory->readByte(ramState[0]) << std::endl;
             // }
-            if (memory->readByte(ramState[0]) != ramState[1])
+            if (memory->readDirect(ramState[0]) != ramState[1])
             {
                 std::cout << "Failed test: " << test["name"] << " RAM" << std::endl;
-                std::cout << "Expected: " << ramState[1] << " Got: " << (int)memory->readByte(ramState[0]) << std::endl;
+                std::cout << "Expected: " << ramState[1] << " Got: " << (int)memory->readDirect(ramState[0]) << std::endl;
             }
             else
             {
@@ -953,10 +970,10 @@ void CPU::updateTimers(int cycles)
 void CPU::doDividerRegister(int cycles)
 {
     divReg += cycles;
-    if (divCounter >= 255)
+    if (divCounter >= 256)
     {
         divCounter = 0;
-        memory->map[0xFF04]++;
+        memory->map[0xFF04] = memory->map[0xFF04] + 1;
     }
 }
 

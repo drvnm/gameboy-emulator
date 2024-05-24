@@ -58,8 +58,11 @@ void Memory::reset()
 uint8_t Memory::readByte(uint16_t address)
 {
     if(address == 0xFF00) {
+        if(debugger->doPrint2) std::cout << "reading from joypad: <" << (int)cpu->getJoypadState() << ">" << std::endl;
         return cpu->getJoypadState();
     }
+ 
+
     return map[address];
 }
 
@@ -91,6 +94,15 @@ void Memory::writeByte(uint16_t address, uint8_t value)
     // {
     //     map[address] = 1;
     // }
+    // if the address is in rom space, do not write to it
+    else if (address >= 0x2000 && address <= 0x8000)
+    {
+         return;
+    }
+    else if (address == 0xFF04)
+    {
+        map[address] = 0;
+    }
     else
     {
 
@@ -102,4 +114,13 @@ void Memory::writeByte(uint16_t address, uint8_t value)
         std::cout << (char)map[0xFF01];
     }
 }
-// }
+
+void Memory::writeDirect(uint16_t address, uint8_t value)
+{
+    map[address] = value;
+}
+
+uint8_t Memory::readDirect(uint16_t address)
+{
+    return map[address];
+}

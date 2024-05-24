@@ -3,7 +3,7 @@
 
 RGB Display::CLASSIC_PALLETE[4] = {{155, 188, 15}, {139, 172, 15}, {48, 98, 48}, {15, 56, 15}};
 RGB Display::GREY_PALLETE[4] = {{255, 255, 255}, {0xCC, 0xCC, 0xCC}, {0x77, 0x77, 0x77}, {0x0, 0x0, 0x0}};
-RGB Display::CHILL_PALLETE[4] = {{ 0x9B, 0xBC, 0x0F }, { 0x8B, 0xAC, 0x0F }, { 0x30, 0x62, 0x30 }, { 0x0F, 0x38, 0x0F }};
+RGB Display::CHILL_PALLETE[4] = {{0x9B, 0xBC, 0x0F}, {0x8B, 0xAC, 0x0F}, {0x30, 0x62, 0x30}, {0x0F, 0x38, 0x0F}};
 Display::Display(Memory *memory, CPU *cpu, Debugger *debugger)
 {
     this->memory = memory;
@@ -140,7 +140,6 @@ void Display::update(uint8_t cycles)
         scanlineCounter = 456;
         if (currentScanline == 144)
         {
-            renderCurrentFrame();
             if (debugger->doTileRender)
             {
                 drawTiles();
@@ -193,18 +192,39 @@ void Display::drawBackground()
     uint8_t windowY = memory->readByte(0xFF4A);     // windowY is the Y position of the window (top left corner of the window)
     uint8_t windowX = memory->readByte(0xFF4B) - 7; // windowX is the X position of the window (top left corner of the window)
     uint8_t scanline = memory->readByte(0xFF44);    // scanline is the current scanline being drawn
+    bool usingWindow = false;
 
     // print where the background should be drawn
 
     bool unsig = bitIsSet(lcdc, 4);                                  // if this bit is set, the tile data is unsigned (0x8000 to 0x8FFF), otherwise it is signed (0x8800 to 0x97FF
     uint16_t tileData = bitIsSet(lcdc, 4) ? 0x8000 : 0x8800;         // this is where the actual tile data is stored
     uint16_t backgroundMemory = bitIsSet(lcdc, 3) ? 0x9C00 : 0x9800; // this is where the background map is stored (each byte represents a tile number)
-    uint8_t yPos = scrollY + scanline;                               // the y position of the pixel is the start of the background + the current scanline
-    uint16_t tileRow = ((uint8_t)yPos / 8) * 32;                     // this moves us to the start of the map for this row of tiles
+
+    if (bitIsSet(lcdc, 5) && windowY <= scanline)
+    {
+        usingWindow = true; // if the window is enabled and the windowY is less than the current scanline, we are using the window
+    }
+
+    if (usingWindow)
+    {
+        backgroundMemory = bitIsSet(lcdc, 6) ? 0x9C00 : 0x9800; // if the window is enabled, we use the window map
+    }
+    uint8_t yPos = scrollY + scanline; // the y position of the pixel is the start of the background + the current scanline
+    if (usingWindow)
+    {
+        yPos = scanline - windowY;
+    }
+    uint16_t tileRow = ((uint8_t)yPos / 8) * 32; // this moves us to the start of the map for this row of tiles
 
     for (int pixel = 0; pixel < 160; pixel++)
     {
         uint8_t xPos = pixel + scrollX;
+
+        if (usingWindow && pixel >= windowX)
+        {
+            xPos = pixel - windowX; // if we are using the window, we need to adjust the x position
+        }
+
         uint16_t tileCol = xPos / 8; // this moves us to the correct tile in the row
         uint16_t tileNum;
         uint16_t tileAddress = backgroundMemory + tileRow + tileCol; // address of the tile number
@@ -271,15 +291,17 @@ void Display::drawPixelTile(int x, int y, RGB color)
 
 void Display::drawSprites()
 {
+    bool use8x16 = false;
     uint8_t lcdc = memory->readByte(0xFF40);
-    bool use8x16 = bitIsSet(lcdc, 2);
+    use8x16 = bitIsSet(lcdc, 2);
+
     for (int sprite = 0; sprite < 40; sprite++)
     {
-        uint16_t spriteAddress = 0xFE00 + (sprite * 4);
-        uint8_t yPos = memory->readByte(spriteAddress) - 16;
-        uint8_t xPos = memory->readByte(spriteAddress + 1) - 8;
-        uint8_t tileLocation = memory->readByte(spriteAddress + 2);
-        uint8_t attributes = memory->readByte(spriteAddress + 3);
+        uint16_t index = sprite * 4;
+        uint8_t yPos = memory->readByte(0xFE00 + index) - 16;
+        uint8_t xPos = memory->readByte(0xFE00 + index + 1) - 8;
+        uint8_t tileLocation = memory->readByte(0xFE00 + index + 2);
+        uint8_t attributes = memory->readByte(0xFE00 + index + 3);
 
         bool yFlip = bitIsSet(attributes, 6);
         bool xFlip = bitIsSet(attributes, 5);
@@ -299,6 +321,7 @@ void Display::drawSprites()
             uint16_t dataAddress = 0x8000 + (tileLocation * 16) + line;
             uint8_t data1 = memory->readByte(dataAddress);
             uint8_t data2 = memory->readByte(dataAddress + 1);
+
             for (int tilePixel = 7; tilePixel >= 0; tilePixel--)
             {
                 int colorBit = tilePixel;
@@ -307,24 +330,27 @@ void Display::drawSprites()
                     colorBit -= 7;
                     colorBit *= -1;
                 }
-                int colorNum = ((data2 & (1 << colorBit)) ? 1 : 0) << 1;
+                int colorNum = (data2 & (1 << colorBit)) ? 1 : 0;
+                colorNum <<= 1;
                 colorNum |= (data1 & (1 << colorBit)) ? 1 : 0;
-                RGB color = CHILL_PALLETE[colorNum];
+
                 if (colorNum == 0)
                 {
                     continue;
                 }
-                int pixel = 7 - tilePixel;
-                int xPix = xPos + pixel;
-                if (scanline < 0 || scanline >= 144 || xPix < 0 || xPix >= 160)
+
+                int xPix = 0 - tilePixel;
+                xPix += 7;
+
+                int pixel = xPos + xPix;
+
+                if (scanline < 0 || scanline >= SCREEN_HEIGHT || pixel < 0 || pixel >= SCREEN_WIDTH)
                 {
                     continue;
                 }
-                if (priority && pixels[(scanline * 160) + xPix].red != 0)
-                {
-                    continue;
-                }
-                pixels[(scanline * 160) + xPix] = color;
+
+                RGB color = CHILL_PALLETE[colorNum];
+                pixels[(scanline * 160) + pixel] = color;
             }
         }
     }
@@ -342,4 +368,15 @@ void Display::renderCurrentFrame()
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
+
+    secondFrameCounter++;
+    current = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration<float, std::milli>(current - previous);
+    if (elapsed.count() > 1000.0)
+    {
+        std::string title = "VENULATOR - " + std::to_string(secondFrameCounter) + " FPS";
+        SDL_SetWindowTitle(window, title.c_str());
+        secondFrameCounter = 0;
+        previous = current;
+    }
 }

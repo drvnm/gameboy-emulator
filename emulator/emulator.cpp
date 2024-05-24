@@ -1,10 +1,7 @@
 #include "emulator.h"
 #include <SDL2/SDL.h>
 #include <chrono>
-
-const int MAX_CYCLES = 70224;
-const float FPS = 59.73;
-const float DELAY_TIME = 1000.0f / FPS;
+#include <windows.h>
 
 Emulator::Emulator(CPU *cpu, Display *display, Memory *memory, Cartridge *cartridge, Debugger *debugger)
 {
@@ -20,37 +17,11 @@ void Emulator::run()
     bool quit = false;
     std::chrono::time_point<std::chrono::high_resolution_clock> current, previous;
     previous = std::chrono::high_resolution_clock::now();
+    SDL_Event e;
 
-    while (cpu->registers.pc < 69905)
+    while (!quit)
     {
-        if (!debugger->doPause)
-        {
-            current = std::chrono::high_resolution_clock::now();
-            auto elapsed = std::chrono::duration<float, std::milli>(current - previous);
-            if (!cpu->halted)
-            {
-                uint8_t cycles = cpu->step();
-                display->update(cycles);
-                cpu->updateTimers(cycles);
-            } else {
-                std::cout << "HALTED" << std::endl;
-            }
-            cpu->handleInterrupts();
-        }
 
-        // if (elapsed.count() < DELAY_TIME)
-        // {
-        //     while (elapsed.count() < DELAY_TIME)
-        //     {
-        //         current = std::chrono::high_resolution_clock::now();
-        //         elapsed = std::chrono::duration<float, std::milli>(current - previous);
-        //     }
-
-        //     previous = current;
-
-        // }
-
-        SDL_Event e;
         while (SDL_PollEvent(&e) != 0)
         {
             if (e.type == SDL_QUIT)
@@ -64,7 +35,6 @@ void Emulator::run()
                 if (e.key.keysym.sym == SDLK_1)
                 {
                     // debugger->doPause = !debugger->doPause;
-                    
                 }
                 // from 1 to 9, set the cpu->keyPressed to the key pressed
                 if (e.key.keysym.sym >= SDLK_1 && e.key.keysym.sym <= SDLK_9)
@@ -89,14 +59,43 @@ void Emulator::run()
                 if (e.key.keysym.sym == SDLK_3)
                 {
                     debugger->doTileRender = true;
-                     
+                }
+                if (e.key.keysym.sym == SDLK_a)
+                {
+                    debugger->doPrint2 = !debugger->doPrint2;
                 }
             }
         }
-        if (quit)
+
+        int updatedCycles = 0;
+        while (updatedCycles < MAX_CYCLES)
         {
-            break;
+            if (!debugger->doPause)
+            {
+                if (!cpu->halted)
+                {
+                    uint8_t cycles = cpu->step();
+                    updatedCycles += cycles;
+                    cpu->updateTimers(cycles);
+                    display->update(cycles);
+                }
+                else
+                {
+                    std::cout << "HALTED" << std::endl;
+                }
+                cpu->handleInterrupts();
+            }
         }
+        display->renderCurrentFrame();
+        current = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration<float, std::milli>(current - previous);
+        previous = current;
+
+        if (elapsed.count() < DELAY_TIME)
+        {
+            Sleep(30);
+        }
+
     }
-    std::cout << "PC: " << cpu->registers.pc << std::endl;
+
 }

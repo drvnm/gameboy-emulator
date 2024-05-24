@@ -8,4 +8,5 @@ public:
     bool doPrint = false;
     bool doTileRender = false;
     bool incrementPC = false;
+    bool doPrint2;
 };

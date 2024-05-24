@@ -6,6 +6,9 @@
 #include "../memory/memory.h"
 #include "../debugger/debugger.h"
 
+#define MAX_CYCLES 69905  
+const float FPS = 59.73f;
+const float DELAY_TIME = 1000.0f / FPS;
 
 class Emulator
 {

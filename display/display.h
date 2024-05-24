@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <SDL2/SDL.h>
+#include <chrono>
 
 #include "../common/defs.h"
 #include "../memory/memory.h"
@@ -59,6 +60,8 @@ private:
     void drawPixel(int x, int y, RGB color);
     void drawTiles(); // directly reads vram to draw all tiles on tilewindow
     void drawPixelTile(int x, int y, RGB color);
+    int secondFrameCounter = 0;
+    std::chrono::time_point<std::chrono::high_resolution_clock> current, previous;
 public:
     Display(Memory *memory, CPU *cpu, Debugger *debugger);
     ~Display();
